@@ -1,0 +1,36 @@
+########################################
+# Kafka headless Service
+# Provides stable network identity for Kafka pods managed by StatefulSet
+########################################
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service is used to expose an application running on a set of Pods as a network service.
+metadata:
+  name: kafka-headless # Headless service name for StatefulSet stable DNS
+spec:
+  clusterIP: None # Headless service for stable pod hostnames
+  selector:
+    app: kafka
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+
+---
+
+########################################
+# Kafka Service
+# Exposes Kafka broker outside cluster for development access
+########################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+spec:
+  selector:
+    app: kafka
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+      nodePort: 30092
+  type: NodePort

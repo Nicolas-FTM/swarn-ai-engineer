@@ -1,0 +1,69 @@
+#######################################
+# Docker Compose file:
+#    This file contains the used 
+#    services used in the build
+#    up of the swarn and the app
+#    It is used for local development and testing
+#    Local development stack for Kafka and Qdrant.
+#    This file is aligned with the Kubernetes
+#    Manifest behavior: stateful services,
+#    persistence, and service discovery.
+#######################################
+
+services:
+
+  qdrant: # Qdrant is the vector database for RAG and embeddings
+    image: qdrant/qdrant:latest # Qdrant image from Docker Hub
+    container_name: qdrant # Fixed name for local debugging and logs
+    ports: # Expose container ports to the host machine
+      - "6333:6333" # HTTP API; maps host 6333 to container 6333
+      - "6334:6334" # gRPC API; maps host 6334 to container 6334
+    volumes: # Persistent storage for Qdrant data
+      - qdrant_storage:/qdrant/storage # Local volume mounted into container
+    restart: unless-stopped # Restart policy: keep service running unless manually stopped
+    healthcheck: # Provide a local health probe similar to Kubernetes readiness/liveness
+      test: ["CMD-SHELL", "curl -f http://localhost:6333/health || exit 1"]
+      interval: 10s # Check every 10 seconds
+      timeout: 5s # Fail if probe takes longer than 5 seconds
+      retries: 3 # Allow 3 retries before marking unhealthy
+      start_period: 30s # Give the container startup time before health checks begin
+    networks:
+      - swarn-net # Share a network to enable service discovery with other containers
+
+  kafka: # Kafka is the event bus used by agents for messaging
+    image: apache/kafka:latest # Official Apache Kafka image for local development
+    container_name: kafka # Fixed name for local debugging and logs
+    ports: # Expose Kafka broker port to the host machine
+      - "9092:9092" # Kafka broker port mapping for local clients
+    environment: # Environment variables configure Kafka listener behavior
+      - KAFKA_BROKER_ID=1 # Unique ID for this broker in a single-node cluster
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092 # Listen on all interfaces inside the container
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 # Advertised listener for clients connecting from host
+    volumes: # Persistent storage for Kafka logs and metadata
+      - kafka_storage:/var/lib/kafka # Local volume mounted into the Apache Kafka data directory
+    restart: unless-stopped # Restart policy for reliability in local testing
+    healthcheck: # Local health probe similar to Kubernetes probes
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s # Check every 10 seconds
+      timeout: 5s # Fail if the probe runs longer than 5 seconds
+      retries: 5 # Retry the probe multiple times before failing
+      start_period: 30s # Allow Kafka extra startup time before health checking
+    networks:
+      - swarn-net # Use a shared network for discovery and connectivity
+
+  # router:
+  #   build: ./router
+
+  # research:
+  #   build: ./research
+
+  # writer:
+  #   build: ./writer
+
+volumes:
+  qdrant_storage: # Named volume for Qdrant persistence
+  kafka_storage: # Named volume for Kafka persistence
+
+networks:
+  swarn-net: # Shared network for cross-service communication
+    driver: bridge # Default Docker network driver for service discovery
