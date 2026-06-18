@@ -1,0 +1,86 @@
+########################################
+# Ollama PersistentVolumeClaim
+# Storage for Ollama models and cache
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: PersistentVolumeClaim # Type of Kubernetes Object. PVC requests storage resources
+metadata:
+  name: ollama-pvc # PVC name
+  namespace: swarn-ai # Namespace where PVC runs
+spec:
+  accessModes:
+    - ReadWriteOnce # Only one pod can write at a time
+  resources:
+    requests:
+      storage: 30Gi # Large disk for model storage (LLM models can be several GB)
+
+########################################
+# Ollama Deployment
+# Local LLM inference service for agents
+########################################
+
+---
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Deployment # Type of Kubernetes Object. Deployment manages Ollama instance
+metadata:
+  name: ollama # Name of the deployment (like container_name in Compose)
+  namespace: swarn-ai # Namespace where deployment runs
+spec:
+  replicas: 1 # Single Ollama instance
+  selector:
+    matchLabels:
+      app: ollama # Connects Deployment with Pods
+  template:
+    metadata:
+      labels:
+        app: ollama # Label used by Service to find this pod
+    spec:
+      containers:
+      - name: ollama # Container name (like service name in Compose)
+        image: ollama/ollama:latest # Ollama LLM inference engine
+        ports:
+        - containerPort: 11434 # Ollama API port
+        env:
+        - name: OLLAMA_HOST # Ollama bind address
+          value: "0.0.0.0:11434" # Listen on all interfaces
+        volumeMounts:
+        - name: ollama-storage # Mount persistent storage
+          mountPath: /root/.ollama # Ollama models directory
+        resources: # Define resource requests and limits for the container
+          requests: # Minimum resources guaranteed
+            memory: "4Gi" # Minimum memory for model loading
+            cpu: "2" # Minimum CPU for inference
+          limits: # Maximum resources allowed
+            memory: "8Gi" # Maximum memory limit
+            cpu: "4" # Maximum CPU limit
+        livenessProbe: # Check if Ollama is alive and should be restarted if not
+          httpGet: # Make HTTP request to check health
+            path: /api/tags # List available models endpoint
+            port: 11434 # Port to check
+          initialDelaySeconds: 60 # Wait before starting liveness checks (model loading takes time)
+          periodSeconds: 30 # Check every 30 seconds
+      volumes:
+      - name: ollama-storage # Reference persistent volume
+        persistentVolumeClaim:
+          claimName: ollama-pvc # Link to PVC
+
+########################################
+# Ollama Service
+# Exposes Ollama deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes Ollama as a network service
+metadata:
+  name: ollama # Service name for DNS resolution
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  selector:
+    app: ollama # Route traffic to pods with this label
+  ports:
+  - port: 11434 # Service port
+    targetPort: 11434 # Pod port
+  type: ClusterIP # Internal service, not exposed outside cluster

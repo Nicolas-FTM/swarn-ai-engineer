@@ -1,0 +1,80 @@
+########################################
+# PostgreSQL PersistentVolumeClaim
+# Storage for PostgreSQL database data
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: PersistentVolumeClaim # Type of Kubernetes Object. PVC requests storage resources
+metadata:
+  name: postgres-pvc # PVC name
+  namespace: swarn-ai # Namespace where PVC runs
+spec:
+  accessModes:
+    - ReadWriteOnce # Only one pod can write at a time
+  resources:
+    requests:
+      storage: 10Gi # Disk size allocated for PostgreSQL database
+
+########################################
+# PostgreSQL Deployment
+# Relational database for application data and LangFuse
+########################################
+
+---
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Deployment # Type of Kubernetes Object. Deployment manages PostgreSQL instance
+metadata:
+  name: postgres # Name of the deployment (like container_name in Compose)
+  namespace: swarn-ai # Namespace where deployment runs
+spec:
+  replicas: 1 # Single PostgreSQL instance (no replication in this setup)
+  selector:
+    matchLabels:
+      app: postgres # Connects Deployment with Pods
+  template:
+    metadata:
+      labels:
+        app: postgres # Label used by Service to find this pod
+    spec:
+      containers:
+      - name: postgres # Container name (like service name in Compose)
+        image: postgres:15-alpine # PostgreSQL 15 Alpine image for small footprint
+        ports:
+        - containerPort: 5432 # PostgreSQL default port
+        env:
+        - name: POSTGRES_DB # Initial database name
+          value: "swarn_db"
+        - name: POSTGRES_USER # Database user
+          value: "postgres"
+        - name: POSTGRES_PASSWORD # Database password from secret
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret # Secret containing database password
+              key: password
+        volumeMounts:
+        - name: postgres-storage # Mount persistent storage
+          mountPath: /var/lib/postgresql/data # Database data directory
+      volumes:
+      - name: postgres-storage # Reference persistent volume
+        persistentVolumeClaim:
+          claimName: postgres-pvc # Link to PVC
+
+########################################
+# PostgreSQL Service
+# Exposes PostgreSQL deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes PostgreSQL as a network service
+metadata:
+  name: postgres # Service name for DNS resolution
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  selector:
+    app: postgres # Route traffic to pods with this label
+  ports:
+  - port: 5432 # Service port
+    targetPort: 5432 # Pod port
+  type: ClusterIP # Internal service, not exposed outside cluster

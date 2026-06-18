@@ -57,6 +57,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce # Only one node can write at a time
+        storageClassName: "local-path" # Use local storage for Kafka logs and data
         resources:
           requests:
             storage: 2Gi # Disk size allocated for Kafka logs and data

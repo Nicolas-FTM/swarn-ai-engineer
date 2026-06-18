@@ -1,9 +1,70 @@
 [project]
-authors = [{name = "Nicolas-FTM", email = "nicolasfelipetm@gmail.com"}]
-dependencies = []
 name = "agent_swarn"
+authors = [{name = "Nicolas-FTM", email = "nicolasfelipetm@gmail.com"}]
+description = "Multi-agent RAG chatbot with LangGraph, FastAPI, and observability"
 requires-python = ">= 3.12"
 version = "0.1.0"
+
+
+dependencies = [
+    # FastAPI & Web
+    "fastapi==0.104.1",
+    "uvicorn[standard]==0.24.0",
+    "python-multipart==0.0.6",
+    
+    # Database
+    "sqlalchemy==2.0.23",
+    "alembic==1.12.1",
+    
+    # Auth
+    "fastapi-users[sqlalchemy]==12.1.2",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "python-dotenv==1.0.0",
+    
+    # LLM & RAG
+    "langchain==0.1.0",
+    "langchain-community==0.0.10",
+    "langgraph==0.0.20",
+    "ollama>=0.0.11",
+    
+    # Vector DB
+    "qdrant-client<=2.7.0",
+    
+    # Document Processing
+    "pypdf==3.17.1",
+    "python-docx==0.8.11",
+    "python-pptx==0.6.21",
+    
+    # Observability
+    "langfuse==2.10.0",
+    "opentelemetry-api==1.21.0",
+    "opentelemetry-sdk==1.21.0",
+    "opentelemetry-exporter-prometheus==0.42b0",
+    "prometheus-client==0.19.0",
+    "python-json-logger==2.0.7",
+    
+    # Event Bus (Kafka)
+    "kafka-python==2.0.2",
+    
+    # Utilities
+    "pydantic==2.5.0",
+    "pydantic-settings==2.1.0",
+    "httpx==0.25.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+    "pytest-asyncio==0.21.1",
+    "pytest-cov==4.1.0",
+    "black==23.12.0",
+    "ruff==0.1.8",
+    "mypy==1.7.1",
+    "types-requests==2.31.0.10",
+    "types-PyYAML==6.0.12.12",
+]
+
 
 [build-system]
 build-backend = "hatchling.build"
@@ -14,11 +75,29 @@ packages = ["agents", "backend"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["win-64"]
+platforms = ["win-64", "linux-64"]
+
+[tool.pixi.dependencies]
+psycopg2 = "*"
+numpy = ">=1.26,<2"
 
 [tool.pixi.pypi-dependencies]
 agent_swarn = { path = ".", editable = true }
 
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I", "UP"]
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
 [tool.pixi.tasks]
-
-

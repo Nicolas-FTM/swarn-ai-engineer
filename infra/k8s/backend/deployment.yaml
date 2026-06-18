@@ -1,0 +1,124 @@
+########################################
+# Backend Deployment
+# Main API service for the swarn application
+########################################
+
+---
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Deployment # Type of Kubernetes Object. Deployment ensures specified number of replicas of backend pods are running
+metadata:
+  name: backend # Name of the deployment
+  namespace: swarn-ai # Namespace where this deployment runs
+  labels:
+    app: backend # Label for organizing and querying resources
+spec:
+  replicas: 2 # Number of backend instances running for high availability
+  selector:
+    matchLabels:
+      app: backend # Connects Deployment with Pods
+  template:
+    metadata:
+      labels:
+        app: backend # Label used by Service to find this pod
+    spec:
+      containers:
+      - name: backend # Container name (like service name in Compose)
+        image: swarn/backend:latest # Backend application image
+        imagePullPolicy: IfNotPresent # Use local image if available, otherwise pull
+        ports:
+        - containerPort: 8000 # Backend HTTP API port
+          name: http # Name of the port (used for Service definitions)
+        env:
+        - name: DATABASE_URL # PostgreSQL connection string
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets # Secret containing database URL
+              key: database-url
+        - name: QDRANT_URL # Vector database endpoint
+          value: "http://qdrant:6333"
+        - name: OLLAMA_BASE_URL # LLM service endpoint
+          value: "http://ollama:11434"
+        - name: JWT_SECRET # Secret for JWT token signing
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: jwt-secret
+        - name: ENVIRONMENT # Deployment environment
+          value: "production"
+        - name: LOG_LEVEL # Application logging level
+          value: "INFO"
+        livenessProbe: # Check if backend is alive and should be restarted if not
+          httpGet: # Make HTTP request to check health
+            path: /health # Health check endpoint
+            port: 8000 # Port to check
+          initialDelaySeconds: 30 # Wait before starting liveness checks
+          periodSeconds: 10 # Check every 10 seconds
+        readinessProbe: # Check if backend is ready to accept traffic
+          httpGet: # Make HTTP request to check readiness
+            path: /health # Readiness check endpoint
+            port: 8000 # Port to check
+          initialDelaySeconds: 10 # Wait before starting readiness checks
+          periodSeconds: 5 # Check every 5 seconds
+        resources: # Define resource requests and limits for the container
+          requests: # Minimum resources guaranteed
+            memory: "512Mi" # Minimum memory allocation
+            cpu: "250m" # Minimum CPU allocation
+          limits: # Maximum resources allowed
+            memory: "1Gi" # Maximum memory limit
+            cpu: "1" # Maximum CPU limit
+      initContainers:
+      - name: wait-for-postgres # Init container to wait for database availability
+        image: busybox:1.28 # Lightweight image for utilities
+        command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done'] # Wait for postgres port to be open
+
+########################################
+# Backend Service
+# Exposes backend deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes an application as a network service
+metadata:
+  name: backend # Service name for DNS resolution
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  selector:
+    app: backend # Route traffic to pods with this label
+  ports:
+  - port: 8000 # Service port
+    targetPort: 8000 # Pod port
+    name: http # Port name for reference
+  type: ClusterIP # Internal service, not exposed outside cluster
+
+########################################
+# Backend HorizontalPodAutoscaler
+# Automatically scales backend replicas based on CPU usage
+########################################
+
+---
+apiVersion: autoscaling/v2 # Define which Kubernetes API ruleset is used for this resource
+kind: HorizontalPodAutoscaler # Type of Kubernetes Object. HPA automatically scales replicas
+metadata:
+  name: backend-hpa # HPA name
+  namespace: swarn-ai # Namespace where HPA runs
+spec:
+  scaleTargetRef: # Target resource to scale
+    apiVersion: apps/v1 # API version
+    kind: Deployment # Target kind
+    name: backend # Target deployment name
+  minReplicas: 2 # Minimum number of replicas
+  maxReplicas: 5 # Maximum number of replicas
+  metrics:
+  - type: Resource # Scale based on resource metrics
+    resource:
+      name: cpu # Scale based on CPU usage
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

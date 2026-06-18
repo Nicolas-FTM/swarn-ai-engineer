@@ -1,0 +1,77 @@
+########################################
+# Loki PersistentVolumeClaim
+# Storage for Loki logs data
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: PersistentVolumeClaim # Type of Kubernetes Object. PVC requests storage resources
+metadata:
+  name: loki-pvc # PVC name
+  namespace: swarn-ai # Namespace where PVC runs
+spec:
+  accessModes:
+    - ReadWriteOnce # Only one pod can write at a time
+  resources:
+    requests:
+      storage: 10Gi # Disk size for aggregated logs data
+
+########################################
+# Loki Deployment
+# Centralized log aggregation system
+########################################
+
+---
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Deployment # Type of Kubernetes Object. Deployment manages Loki instance
+metadata:
+  name: loki # Name of the deployment (like container_name in Compose)
+  namespace: swarn-ai # Namespace where deployment runs
+spec:
+  replicas: 1 # Single Loki instance
+  selector:
+    matchLabels:
+      app: loki # Connects Deployment with Pods
+  template:
+    metadata:
+      labels:
+        app: loki # Label used by Service to find this pod
+    spec:
+      containers:
+      - name: loki # Container name (like service name in Compose)
+        image: grafana/loki:latest # Loki log aggregation system
+        ports:
+        - containerPort: 3100 # Loki API and ingestion port
+        volumeMounts:
+        - name: loki-storage # Mount persistent storage
+          mountPath: /loki # Data directory
+        resources: # Define resource requests and limits for the container
+          requests: # Minimum resources guaranteed
+            memory: "256Mi" # Minimum memory allocation
+            cpu: "100m" # Minimum CPU allocation
+          limits: # Maximum resources allowed
+            memory: "512Mi" # Maximum memory limit
+            cpu: "500m" # Maximum CPU limit
+      volumes:
+      - name: loki-storage # Reference persistent volume
+        persistentVolumeClaim:
+          claimName: loki-pvc # Link to PVC
+
+########################################
+# Loki Service
+# Exposes Loki deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes Loki as a network service
+metadata:
+  name: loki # Service name for DNS resolution
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  selector:
+    app: loki # Route traffic to pods with this label
+  ports:
+  - port: 3100 # Service port
+    targetPort: 3100 # Pod port
+  type: ClusterIP # Internal service, not exposed outside cluster

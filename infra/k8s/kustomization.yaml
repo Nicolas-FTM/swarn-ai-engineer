@@ -1,3 +1,38 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: swarn-ai
+
+namespace: swarn-ai
+
 resources:
-  - qdrant
-  - kafka
+  - namespace.yaml
+  - postgres/kustomization.yaml
+  - qdrant/kustomization.yaml
+  - ollama/kustomization.yaml
+  - backend/kustomization.yaml
+  - frontend/kustomization.yaml
+  - langfuse/kustomization.yaml
+  - prometheus/kustomization.yaml
+  - grafana/kustomization.yaml
+  - loki/kustomization.yaml
+
+secretGenerator:
+  - name: postgres-secret
+    envs:
+      - secrets.env
+  - name: backend-secrets
+    envs:
+      - backend-secrets.env
+  - name: langfuse-secrets
+    envs:
+      - langfuse-secrets.env
+  - name: grafana-secrets
+    envs:
+      - grafana-secrets.env
+
+replicas:
+  - name: backend
+    count: 2
+  - name: frontend
+    count: 2

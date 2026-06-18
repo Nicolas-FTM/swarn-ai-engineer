@@ -53,6 +53,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce # Only one node can write at a time
+        storageClassName: "local-path" # Use local storage for Qdrant data
         resources:
           requests:
             storage: 1Gi # Disk size allocated for Qdrant data
