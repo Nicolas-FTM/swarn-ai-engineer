@@ -199,6 +199,44 @@ services:
   #     - swarn-network
 
   ########################################
+  # RAG API Service
+  # FastAPI REST API for the RAG
+  # functionality, including vector search
+  # and document retrieval
+  ########################################
+  rag-service:
+    build: # Build image from Dockerfile
+      context: ../.. # Build context (project root directory)
+      dockerfile: rag_service/Dockerfile # Dockerfile path
+    container_name: swarn-rag-service # Container name for easy identifications
+    ports:
+      - "8001:8001"     # quitar en prod si no necesitas acceso directo
+    environment: # Environment variables for backend configuration
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@postgres:5432/swarn_db # PostgreSQL connection
+      QDRANT_URL: http://qdrant:6333 # Qdrant vector database endpoint
+      OLLAMA_BASE_URL: http://ollama:11434 # Ollama LLM service endpoint
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-} # LangFuse public key (from .env or empty)
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-} # LangFuse secret key (from .env or empty)
+      LANGFUSE_HOST: http://langfuse-web:3000 # LangFuse service endpoint
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this} # JWT secret for token signing
+      JWT_ALGORITHM: HS256 # JWT algorithm
+      ENVIRONMENT: development # Deployment environment
+      LOG_LEVEL: INFO # Application logging level
+    volumes:
+      - ../../rag_service/data:/app/data # Shared data directory
+      - ../../rag_service/app:/app/app # Backend source code for live reload
+      - ../../shared:/app/shared # Config source code for live reload
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: pixi run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload # Start command with hot-reload
+
+
+  ########################################
   # Backend API Service
   # FastAPI REST API for the swarn application
   ########################################
@@ -228,12 +266,13 @@ services:
       # ollama: # Requires Ollama
       #   condition: service_healthy # Wait for Ollama to be healthy
     volumes: # Mount directories for development
-      - ../../backend:/app/backend # Backend source code for live reload
+      - ../../backend/data:/app/data # Data directory
+      - ../../backend/app:/app/app # Backend source code for live reload
       - ../../config:/app/config # Config source code for live reload
-      - ../../data:/app/data # Shared data directory
+      - ../../shared:/app/shared # Shared Data Directory
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
-    command: pixi run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload # Start command with hot-reload
+    command: pixi run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload # Start command with hot-reload
 
   ########################################
   # Frontend Web Application

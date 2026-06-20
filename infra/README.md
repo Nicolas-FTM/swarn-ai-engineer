@@ -66,7 +66,7 @@ docker exec -it <container-name> bash
 Recreate images from dockerfiles:
 
 ```bash
-docker compose build --no-cache <dockerfile-img>
+docker compose -f infra/docker-compose/docker-compose.yaml build --no-cache
 ```
 
 Check logs of a container:

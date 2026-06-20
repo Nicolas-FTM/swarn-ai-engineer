@@ -1,5 +1,5 @@
 """
-Main FastAPI application entry point.
+RAG Service FastAPI application entry point.
 """
 from contextlib import asynccontextmanager
 import logging
@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import health, users, chat, documents, example
+from app.api import example
 from app.utils.telemetry import setup_observability
 from shared.config import settings
 
@@ -32,8 +32,8 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="Backend FastAPI Application",
-    description="Backend FastAPI application with observability",
+    title="RAG Service FastAPI Application",
+    description="RAG Service FastAPI application with observability",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -62,16 +62,12 @@ async def general_exception_handler(request, exc):
     )
 
 # Include routers
-app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
-app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
 app.include_router(example.router, prefix="/api/examples", tags=["examples"])
 
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,
         reload=settings.environment == "development",
     )

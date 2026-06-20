@@ -1,5 +1,5 @@
 """
-Backend package.
+RAG Service package.
 """
 
 from .app import *

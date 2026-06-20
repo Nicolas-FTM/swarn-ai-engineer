@@ -2,19 +2,9 @@
 Document upload and management endpoints.
 """
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
-from pydantic import BaseModel
+from shared.schemas.documents import DocumentResponse
 
 router = APIRouter()
-
-
-class DocumentResponse(BaseModel):
-    """Document response schema."""
-
-    id: str
-    filename: str
-    size: int
-    status: str
-
 
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(file: UploadFile = File(...)):

@@ -2,29 +2,9 @@
 User management endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from shared.schemas.users import UserCreate, UserResponse
 
 router = APIRouter()
-
-
-class UserCreate(BaseModel):
-    """User creation schema."""
-
-    email: EmailStr
-    password: str
-    full_name: str
-
-
-class UserResponse(BaseModel):
-    """User response schema."""
-
-    id: int
-    email: str
-    full_name: str
-
-    class Config:
-        from_attributes = True
-
 
 @router.post("/register", response_model=UserResponse)
 async def register_user(user: UserCreate):
