@@ -30,6 +30,27 @@ services:
       - swarn-network # Connect to swarn-network for service-to-service communication
 
   ########################################
+  # pgAdmin Web Interface
+  # Web-based administration tool for PostgreSQL
+  ########################################
+  pgadmin:
+    image: dpage/pgadmin4:latest # pgAdmin 4 image for PostgreSQL web-based administration
+    container_name: swarn-pgadmin # Container name for easy identification
+    environment: # Environment variables for pgAdmin configuration
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com} # Login email (from .env or default)
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin} # Login password (from .env or default)
+      PGADMIN_CONFIG_SERVER_MODE: "False" # Disable server mode for simpler single-user login
+    ports:
+      - "5050:80" # pgAdmin web UI port: host:container
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin # Persistent pgAdmin configuration/sessions storage
+    depends_on:
+      postgres: # Wait for postgres service
+        condition: service_healthy # Only start once postgres healthcheck passes
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
   # Qdrant Vector Database
   # Vector database for RAG and similarity search
   ########################################
@@ -171,6 +192,8 @@ services:
   # MESSAGE BUS - Kafka (Optional, Currently Commented)
   # Event streaming platform for agents and asynchronous messaging
   # Uncomment to enable Kafka+Zookeeper stack
+  # TODO: massive ingestion of data, consider using a more
+  # robust Kafka cluster or managed service
   ########################################
   # kafka:
   #   image: confluentinc/cp-kafka:7.5.0
@@ -328,6 +351,7 @@ networks:
 ########################################
 volumes:
   postgres_data: # PostgreSQL database storage
+  pgadmin_data: # pgAdmin configuration and session storage
   qdrant_data: # Qdrant vector database storage
   ollama_data: # Ollama models and cache storage
   loki-data: # Loki logs storage
