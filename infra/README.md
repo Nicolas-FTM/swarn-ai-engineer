@@ -16,7 +16,7 @@
 - Enable Kubernetes if you want a local Kubernetes cluster.
 - Make sure `docker` and `kubectl` are available in your shell.
 
-### 3. Install `kubectl`
+### 3. Install `kubectl` (Optional: Currently unavailable)
 - If not already installed, install `kubectl` on Windows or in WSL:
   ```powershell
   choco install kubernetes-cli
@@ -28,60 +28,120 @@
   ```
 
 ### 4. Verify tools
-- Docker:
+- `Docker`:
   ```bash
   docker version
   ```
-- kubectl:
+- `Kubernetes`:
   ```bash
   kubectl version --client
   ```
 
-## Docker Compose quick start
+### 5A. Quick start (Docker Compose Version)
 
-From the repository root:
+> [!WARNING]
+> <b> 0.- Reset the entire environnment (just in case, you want to build again the environment) </b>
 
-```bash
-docker compose -f infra/docker-compose/docker-compose.yaml up -d --remove-orphans --force-recreate
-```
-or
-```bash
-docker compose -f infra/docker-compose/docker-compose.yaml up -d backend frontend rag-service --remove-orphans --force-recreate
-```
-
-Stop the stack:
+Definition: delete docker images, services and volumes 
+* [-f] Directory of the docker-compose.yaml
+* [-v] (or --volumes) Deletes all the volumes 
+* [--rmi all] Deletes all the images of the project
+* [--remove-orphans] Deletes all the orphans containers
 
 ```bash
-docker compose -f infra/docker-compose/docker-compose.yaml down -v --remove-orphans
+docker compose -f infra/docker-compose/docker-compose.yaml down -v --rmi all --remove-orphans
 ```
 
-See all the containers:
+<b> 1.- Create the .env file </b>
+Definition: copy the .env.example to a new file named .env
 
+[Windows]
 ```bash
-docker compose -f infra/docker-compose/docker-compose.yaml ps [-a]  
+copy .env.example .env
 ```
 
-Access to the command line of a container:
-
+[Linux]
 ```bash
-docker exec -it <container-name> bash
+cp .env.example .env
 ```
 
-Recreate images from dockerfiles:
+<b> 2.- Create all the images </b>
+
+Definition: creation of all the images specified in field build: dockerfile inside each service in the docker-compose.yaml
+* [-f] Directory of the docker-compose.yaml
+* [--no-cache] Do not use cache when building the image
 
 ```bash
 docker compose -f infra/docker-compose/docker-compose.yaml build --no-cache
 ```
 
-Check logs of a container:
+<b> 3.- Create and start all containers </b>
+
+Definition: once we have all the images of the services, this command builds, (re)creates, starts, and attaches to containers for every service.
+* [-f] Directory of the docker-compose.yaml
+* [-d] Detached mode: Run containers in the background
+* [--remove-orphans] Deletes all the orphans containers
+* [--force-recreate] Recreate containers even if their configuration and image haven't changed
+
+
+```bash
+docker compose -f infra/docker-compose/docker-compose.yaml up -d --remove-orphans --force-recreate
+```
+
+<b> 4.- Set your environment variables </b> 
+
+Definition: obtain your api keys of all the services and copy them to .env
+
+Example: you create your account in Langfuse, create organization + members + project, and you obtain secret key and public key. Put that values in the fields on .env
+
+<b> 5.- Reset your environment variables </b> 
+
+Definition: Once you have been set the environment variables, you are going to make the steps 2 and 3 just for backend, frontend and rag-service. Keep in mind this step is to copy the new .env file to each container
+
+```bash
+docker compose -f infra/docker-compose/docker-compose.yaml build --no-cache
+```
+
+```bash
+docker compose -f infra/docker-compose/docker-compose.yaml up frontend backend rag-service -d --remove-orphans --force-recreate
+```
+
+<b> 6.- Download the ollama model </b> 
+
+Definition: Download process of ollama ai model for the app. In this case, the used model llama3.1
+
+```bash
+docker exec -it swarn-ollama bash
+ollama pull llama3.1
+ollama list
+```
+
+> [!TIP]
+> <b> Sandbox of useful commands for yoour deployment </b>
+
+<b> A.- See all containers </b>
+
+```bash
+docker compose -f infra/docker-compose/docker-compose.yaml ps [-a]  
+```
+
+<b> Access to the command line of a container </b>
+
+```bash
+docker exec -it <container-name> bash
+```
+
+<b> Check logs of a container </b>
 
 ```bash
 docker logs <container-name>
 ```
 
-## Kubernetes quick start
+### 5B. Quick start (Kubernetes Version)
 
-From the repository root:
+TODO
+
+<!-- From the repository root:
 
 ```bash
 kubectl apply -k infra/k8s
@@ -106,7 +166,7 @@ kubectl get pvc -n default
 docker exec -it swarn-ollama bash
 ollama pull llama3.1
 ollama list
-```
+``` -->
 
 ## What services are in this infra
 
