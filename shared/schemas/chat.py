@@ -13,12 +13,13 @@ class ChatRequest(BaseModel):
     """Chat request schema."""
 
     message: str
-    conversation_id: str = ""
+    session_id: str = ""
 
 
 class ChatResponse(BaseModel):
     """Chat response schema."""
 
-    conversation_id: str
     message: str
+    session_id: str
+    
     sources: list = []

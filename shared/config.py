@@ -79,20 +79,20 @@ class Settings(BaseSettings):
     loki_port: int = os.getenv("LOKI_PORT", 3100)
     loki_url: str = f"http://{loki_host}:{loki_port}"
 
+    # Tempo
+    tempo_host: str = os.getenv("TEMPO_HOST", "localhost")
+    tempo_port: int = os.getenv("TEMPO_PORT", 4317)
+    tempo_url: str = f"{tempo_host}:{tempo_port}"
+
     # LangFuse
-    langfuse_host: str = os.getenv("LANGFUSE_HOST", "localhost")
-    langfuse_port: int = os.getenv("LANGFUSE_PORT", 3001)
-    langfuse_url: str = f"http://{langfuse_host}:{langfuse_port}"
+    langfuse_url: str = os.getenv("LANGFUSE_HOST", "http://langfuse-web:3000") 
     langfuse_public_key: str = os.getenv("LANGFUSE_PUBLIC_KEY", "your-api-key-change-this-in-production")
     langfuse_secret_key: str = os.getenv("LANGFUSE_SECRET_KEY", "your-api-key-change-this-in-production")
     langfuse_secret: str = os.getenv("LANGFUSE_SECRET", "changeme")
     langfuse_salt: str = os.getenv("LANGFUSE_SALT", "changeme")
 
     # Langfuse (OPTelemetry)
-    otel_exporter_otlp_endpoint = langfuse_url # Langfuse OTLP endpoint
-    otel_exporter_otlp_traces_endpoint = langfuse_url
-    otel_exporter_otlp_metrics_endpoint = prometheus_url 
-    otel_exporter_otlp_logs_endpoint = loki_url 
+    otel_exporter_otlp_endpoint : str = f"{tempo_host}:{tempo_port}" # Tempo OTLP gRPC endpoint
 
     # CORS
     cors_origins: str = os.getenv("CORS_ORIGINS", "NA")

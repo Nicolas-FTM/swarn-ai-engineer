@@ -5,12 +5,19 @@ from .exceptions import (
     VectorStoreError,
 )
 
-from .telemetry import setup_observability
+from .logging_config import (
+    JSONFormatter,
+    setup_logging
+)
 
 __all__ = [
+    # Exceptions
     "SwarnException",
     "DocumentIngestionError",
     "RAGError",
     "VectorStoreError",
-    "setup_observability",
+
+    # Telemetry
+    "JSONFormatter",
+    "setup_logging"
 ]
