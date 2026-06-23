@@ -29,6 +29,7 @@ dependencies = [
     "langgraph>=0.2.0",
     "ollama>=0.3.0",
     "packaging<=24.0",
+    "openai",
     
     # Vector DB
     "qdrant-client>=1.9.0", 
@@ -39,12 +40,25 @@ dependencies = [
     "python-pptx==0.6.21",
     
     # Observability
+    #### Langfuse
     "langfuse==2.30.0",
-    "opentelemetry-api==1.21.0",
-    "opentelemetry-sdk==1.21.0",
-    "opentelemetry-exporter-prometheus==0.42b0",
+
+    #### Opentelemetry for Prometheus, Loki and Tempo
+    "opentelemetry-sdk>=1.27.0",
+    "opentelemetry-api>=1.27.0",
+    "opentelemetry-instrumentation>=0.48b0",
+    "opentelemetry-instrumentation-asgi>=0.48b0",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
+    "opentelemetry-exporter-prometheus>=0.48b0",
+    "opentelemetry-exporter-otlp>=1.21.0",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27.0",
+    "opentelemetry-semantic-conventions>=0.48b0",
+    "opentelemetry-util-http>=0.48b0",
+
+    #### Prometheus
     "prometheus-client==0.19.0",
     "python-json-logger==2.0.7",
+    "setuptools",
     
     # Event Bus (Kafka)
     "kafka-python-ng==2.2.2",       
@@ -85,6 +99,7 @@ numpy = ">=1.26,<2"
 python = "3.12.*"
 pip = "*"
 packaging = "<24.0"
+setuptools = "<81"
 
 [tool.pixi.pypi-dependencies]
 agent_swarn = { path = ".", editable = true }
