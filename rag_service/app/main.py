@@ -51,6 +51,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Exception handlers
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc):
@@ -62,7 +63,8 @@ async def general_exception_handler(request, exc):
     )
 
 # Include routers
-app.include_router(example.router, prefix="/api/examples", tags=["examples"])
+app.include_router(example.router, prefix="/api", tags=["examples"])
+app.include_router(generation.router, prefix="/api", tags=["generation"])
 
 if __name__ == "__main__":
     uvicorn.run(

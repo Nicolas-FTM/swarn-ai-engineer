@@ -63,10 +63,10 @@ async def general_exception_handler(request, exc):
 
 # Include routers
 app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
-app.include_router(documents.router, prefix="/api/documents", tags=["documents"])
-app.include_router(example.router, prefix="/api/examples", tags=["examples"])
+app.include_router(users.router, prefix="/api", tags=["users"])
+app.include_router(chat.router, prefix="/api", tags=['chat'])
+app.include_router(documents.router, prefix="/api", tags=["documents"])
+app.include_router(example.router, prefix="/api", tags=["examples"])
 
 if __name__ == "__main__":
     uvicorn.run(
