@@ -25,6 +25,7 @@ schema_config:
 
 server:
   http_listen_port: 3100
+  grpc_listen_port: 9096
 
 storage_config:
   boltdb_shipper:
@@ -36,6 +37,10 @@ storage_config:
 common:
   path_prefix: /var/loki
   replication_factor: 1
+  storage:
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
   ring:
     kvstore:
       store: inmemory
@@ -43,3 +48,8 @@ common:
 table_manager:
   retention_deletes_enabled: false
   retention_period: 0s
+
+
+# TODO: check if it is worth it to use Alertmanager
+# ruler:
+#   alertmanager_url: http://localhost:9093   # TODO: Just in case if you use AlertManager

@@ -9,17 +9,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from app.api import health, users, chat, documents, example
-from app.utils.telemetry import setup_observability
+
+from shared.utils.logging_config import JSONFormatter, setup_logging
+from shared.utils.opentelemetry_init import init_telemetry
+from shared.utils.metrics import init_metrics, get_metrics_app
 from shared.config import settings
 
 # Configure logging
-logging.basicConfig(
-    level=settings.log_level,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+setup_logging(level=settings.log_level)
+logger = logging.getLogger("backend")
+
+# Measure traces
+trace_provider, resource = init_telemetry("backend")
+init_metrics(resource)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,8 +43,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Setup observability (OpenTelemetry, Prometheus, LangFuse)
-setup_observability(app)
+# Mount /metrics BEFORE instrumenting, so it's excluded from traced/measured routes
+app.mount("/metrics", get_metrics_app())
+FastAPIInstrumentor().instrument_app(app)
 
 # Middleware
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])

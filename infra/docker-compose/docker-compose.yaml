@@ -84,16 +84,12 @@ services:
       - "11434:11434" # Ollama API port: host:container
     volumes:
       - ollama_data:/root/.ollama # Persistent storage for downloaded models
+    entrypoint: sh -c "ollama serve & sleep 5 && ollama pull llama3.1 && wait"
     environment: # Environment variables for Ollama configuration
       OLLAMA_HOST: 0.0.0.0:11434 # Bind address and port
-    # Deactivated healthcheck due to curl are not working with Qdrant's health endpoint in some versions
-    # healthcheck: # Check Ollama availability
-    #   test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"] # Test models list endpoint
-    #   interval: 30s # Check every 30 seconds (model loading takes time)
-    #   timeout: 10s # Timeout for each check
-    #   retries: 3 # Retry 3 times before marking unhealthy
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
+
 
   ########################################
   # Loki Log Aggregator
@@ -128,6 +124,34 @@ services:
       - swarn-network # Connect to swarn-network for service-to-service communication
 
   ########################################
+  # Node Exporter
+  ########################################  
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: swarn-node-exporter
+    pid: host
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
+
+  ########################################
+  # Promtail Log Aggregator
+  # Log Collector Service for Loki
+  ########################################  
+  promtail:
+    image: grafana/promtail:2.9.4 # Log collector for Loki
+    container_name: swarn-promtail # Container name for easy identification
+    volumes:
+      - ../promtail/promtail-config.yaml:/etc/promtail/config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yaml # Start with configuration file
+    depends_on:
+      - loki
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
   # Prometheus Metrics Database
   # Time-series database for metrics collection and monitoring
   ########################################
@@ -142,6 +166,43 @@ services:
     command: # Prometheus startup command
       - "--config.file=/etc/prometheus/prometheus.yml" # Configuration file path
       - "--storage.tsdb.path=/prometheus" # Time-series database storage path
+      - "--web.enable-remote-write-receiver" 
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Tempo Traces Database
+  # Distributed traces (spans) TraceQL / Tempo API
+  ########################################
+
+  # Fix permissions for Tempo data volume (Grafana Recommendation: Tempo runs as non-root 
+  # user, so we need to ensure the volume has correct ownership)
+  tempo-permissions-fix:
+    image: busybox # Image with basic utilities for fixing permissions
+    container_name: swarn-tempo-permissions-fix # Container name for easy identification
+    user: "0:0" # User root to fix permissions on the tempo-data volume
+    entrypoint: ["sh", "-c", "chown -R 10001:10001 /tmp/tempo && echo 'Permissions fixed for Tempo data volume'"] # Change ownership of the tempo-data volume to the Tempo user
+    volumes:
+      - tempo-data:/tmp/tempo # Persistent storage for traces data
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: swarn-tempo
+    depends_on:
+      tempo-permissions-fix:
+        condition: service_completed_successfully
+    ports:
+      - "3200:3200"   # HTTP API (for Grafana)
+      - "4317:4317"   # OTLP gRPC (for receiving spans)
+    command:
+      - "-target=all"
+      - "-config.file=/etc/tempo/local-config.yaml"
+    volumes:
+      - ../tempo/tempo-config.yaml:/etc/tempo/local-config.yaml:ro
+      - tempo-data:/tmp/tempo
+    restart: unless-stopped
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
 
@@ -232,19 +293,10 @@ services:
       context: ../.. # Build context (project root directory)
       dockerfile: rag_service/Dockerfile # Dockerfile path
     container_name: swarn-rag-service # Container name for easy identifications
+    env_file:
+      - ../../.env
     ports:
       - "8001:8001"     # quitar en prod si no necesitas acceso directo
-    environment: # Environment variables for backend configuration
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@postgres:5432/swarn_db # PostgreSQL connection
-      QDRANT_URL: http://qdrant:6333 # Qdrant vector database endpoint
-      OLLAMA_BASE_URL: http://ollama:11434 # Ollama LLM service endpoint
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-} # LangFuse public key (from .env or empty)
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-} # LangFuse secret key (from .env or empty)
-      LANGFUSE_HOST: http://langfuse-web:3000 # LangFuse service endpoint
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this} # JWT secret for token signing
-      JWT_ALGORITHM: HS256 # JWT algorithm
-      ENVIRONMENT: development # Deployment environment
-      LOG_LEVEL: INFO # Application logging level
     volumes:
       - ../../rag_service/data:/app/data # Shared data directory
       - ../../rag_service/app:/app/app # Backend source code for live reload
@@ -268,19 +320,10 @@ services:
       context: ../.. # Build context (project root directory)
       dockerfile: backend/Dockerfile # Dockerfile path
     container_name: swarn-backend # Container name for easy identification
+    env_file:
+      - ../../.env
     ports:
       - "8000:8000" # API port: host:container
-    environment: # Environment variables for backend configuration
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@postgres:5432/swarn_db # PostgreSQL connection
-      QDRANT_URL: http://qdrant:6333 # Qdrant vector database endpoint
-      OLLAMA_BASE_URL: http://ollama:11434 # Ollama LLM service endpoint
-      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-} # LangFuse public key (from .env or empty)
-      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-} # LangFuse secret key (from .env or empty)
-      LANGFUSE_HOST: http://langfuse-web:3000 # LangFuse service endpoint
-      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-this} # JWT secret for token signing
-      JWT_ALGORITHM: HS256 # JWT algorithm
-      ENVIRONMENT: development # Deployment environment
-      LOG_LEVEL: INFO # Application logging level
     depends_on: # Wait for these services to start
       postgres: # Requires PostgreSQL
         condition: service_healthy # Wait for PostgreSQL to be healthy
@@ -308,9 +351,8 @@ services:
     container_name: swarn-frontend # Container name for easy identification
     ports:
       - "5173:5173" # Dev server port: host:container
-    environment: # Environment variables for frontend configuration
-      VITE_API_BASE_URL: http://localhost:8000 # Backend API base URL
-      VITE_API_TIMEOUT: 30000 # API request timeout in milliseconds
+    env_file:
+      - ../../.env
     volumes: # Mount directories for development
       - ../../frontend/src:/app/src # Frontend source code for hot-reload
       - ../../frontend/public:/app/public # Static assets
@@ -357,3 +399,4 @@ volumes:
   loki-data: # Loki logs storage
   prometheus_data: # Prometheus metrics storage
   grafana_data: # Grafana dashboards and configuration storage
+  tempo-data: # Tempo Data

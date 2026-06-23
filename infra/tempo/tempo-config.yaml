@@ -1,0 +1,48 @@
+# -------------------------------------------------
+# Tempo 2.5 – minimal dev configuration (file‑based storage)
+# -------------------------------------------------
+server:
+  http_listen_port: 3200          # HTTP API used by Grafana
+  grpc_listen_port: 9095          # Internal Tempo gRPC API, NOT the OTLP port
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+        thrift_http:
+        thrift_binary:
+        thrift_compact:
+    zipkin:
+  ring:
+    kvstore:
+      store: inmemory   # in‑memory ring for dev; replace with etcd/consul/etc. for prod
+
+storage:
+  trace:
+    backend: local
+    local:
+      # Directory where Tempo will write trace blocks.
+      # This directory is mounted as a volume in docker‑compose.
+      path: /tmp/tempo
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics, local-blocks]
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true

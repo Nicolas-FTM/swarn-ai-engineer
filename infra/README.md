@@ -42,7 +42,11 @@
 From the repository root:
 
 ```bash
-docker compose -f infra/docker-compose/docker-compose.yaml up -d --remove-orphans
+docker compose -f infra/docker-compose/docker-compose.yaml up -d --remove-orphans --force-recreate
+```
+or
+```bash
+docker compose -f infra/docker-compose/docker-compose.yaml up -d backend frontend rag-service --remove-orphans --force-recreate
 ```
 
 Stop the stack:
@@ -94,6 +98,14 @@ Inspect the resources:
 ```bash
 kubectl get all -n default
 kubectl get pvc -n default
+```
+
+## Ollama pull models
+
+```bash
+docker exec -it swarn-ollama bash
+ollama pull llama3.1
+ollama list
 ```
 
 ## What services are in this infra
