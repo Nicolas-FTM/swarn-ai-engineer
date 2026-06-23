@@ -1,5 +1,5 @@
 # Agents
-from .agents.graph import create_rag_graph
+from .agents.graph import build_graph, retrieve_and_generate_node
 from .agents.tools import retrieve_from_documents, search_web
 
 # API
@@ -10,8 +10,7 @@ from .api.users import (
     get_current_user,
 )
 from .api.chat import (
-    chat_message,
-    get_conversation,
+    chat_endpoint
 )
 from .api.documents import (
     upload_document,
@@ -26,19 +25,10 @@ from .api.example import (
 # Services
 from .services.rag_service import RAGService
 
-# Utils
-from .utils.exceptions import (
-    SwarnException,
-    DocumentIngestionError,
-    RAGError,
-    VectorStoreError,
-)
-
-from .utils.telemetry import setup_observability
-
 __all__ = [
     # Agents
-    "create_rag_graph",
+    "build_graph",
+    "retrieve_and_generate_node",
     "retrieve_from_documents",
     "search_web",
 
@@ -52,8 +42,7 @@ __all__ = [
     "get_current_user",
 
     # Chat
-    "chat_message",
-    "get_conversation",
+    "chat_endpoint",
 
     # Documents
     "upload_document",
@@ -66,13 +55,4 @@ __all__ = [
 
     # Services
     "RAGService",
-
-    # Exceptions
-    "SwarnException",
-    "DocumentIngestionError",
-    "RAGError",
-    "VectorStoreError",
-
-    # Telemetry
-    "setup_observability",
 ]

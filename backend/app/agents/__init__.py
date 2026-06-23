@@ -1,8 +1,12 @@
-from .graph import create_rag_graph
+from .graph import build_graph, retrieve_and_generate_node
 from .tools import retrieve_from_documents, search_web
 
 __all__ = [
-    "create_rag_graph",
+    # Graph
+    "build_graph",
+    "retrieve_and_generate_node",
+
+    # Tools
     "retrieve_from_documents",
     "search_web",
 ]

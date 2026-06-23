@@ -5,8 +5,7 @@ from .users import (
     get_current_user,
 )
 from .chat import (
-    chat_message,
-    get_conversation,
+    chat_endpoint
 )
 from .documents import (
     upload_document,
@@ -26,8 +25,7 @@ __all__ = [
     "login",
     "get_current_user",
 
-    "chat_message",
-    "get_conversation",
+    "chat_endpoint",
 
     "upload_document",
     "list_documents",

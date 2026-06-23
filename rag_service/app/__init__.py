@@ -7,36 +7,19 @@ from .api.example import (
 # Utils
 
 # RAG Functionality
-from .utils.generation import *
-from .utils.ingestion import *
-from .utils.retrieval import *
-
-# Exceptions
-from .utils.exceptions import (
-    SwarnException,
-    DocumentIngestionError,
-    RAGError,
-    VectorStoreError,
-)
-
-# Telemetry
-from .utils.telemetry import setup_observability
+from .api.generation import *
+from .api.ingestion import *
+from .api.retrieval import *
 
 __all__ = [
     
     # Example
     "retrieve_user",
-    "retrieve_all"
+    "retrieve_all",
+
+    # Generation
+    "generate_chat_response",
 
     # Services
     "RAGService",
-
-    # Exceptions
-    "SwarnException",
-    "DocumentIngestionError",
-    "RAGError",
-    "VectorStoreError",
-
-    # Telemetry
-    "setup_observability",
 ]
