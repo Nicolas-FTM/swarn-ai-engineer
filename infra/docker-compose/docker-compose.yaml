@@ -132,7 +132,8 @@ services:
     pid: host
     ports:
       - "9100:9100"
-    restart: unless-stopped
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
 
   ########################################
   # Promtail Log Aggregator
@@ -202,7 +203,6 @@ services:
     volumes:
       - ../tempo/tempo-config.yaml:/etc/tempo/local-config.yaml:ro
       - tempo-data:/tmp/tempo
-    restart: unless-stopped
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
 
