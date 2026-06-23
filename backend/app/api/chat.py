@@ -3,28 +3,34 @@ Chat endpoints for conversational RAG.
 """
 from fastapi import APIRouter, HTTPException, status
 from shared.schemas.chat import ChatRequest, ChatResponse
+from shared.schemas.agent import AgentState
+from app.agents.graph import agent_graph
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-@router.post("/message", response_model=ChatResponse)
-async def chat_message(request: ChatRequest):
-    """
-    Send a message and get a RAG-enhanced response.
-    """
-    # TODO: Implement RAG chat with LangGraph
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Chat endpoint not yet implemented",
-    )
+@router.post("/chat", response_model=ChatResponse)
+async def chat_endpoint(request: ChatRequest) -> ChatResponse:
+    try:
+        logger.info(f"Sending '{request.message}' to Agent")
 
+        state = AgentState(query=request.message,
+                           session_id=request.session_id,
+                           message="",
+                           sources=[])
 
-@router.get("/conversation/{conversation_id}")
-async def get_conversation(conversation_id: str):
-    """
-    Get conversation history.
-    """
-    # TODO: Implement get conversation
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Get conversation not yet implemented",
+        result = await agent_graph.ainvoke(state)
+    except Exception as exc:
+    # TODO: In prod, this should log with your telemetry.py
+        logger.exception("Error invoking agent graph")
+        raise HTTPException(
+            status_code=502,
+            detail="Error contacting to RAG Service"
+        )
+
+    return ChatResponse(
+        message=result["message"],
+        sources=result["sources"],
+        session_id=request.session_id,
     )
