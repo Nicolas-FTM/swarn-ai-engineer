@@ -31,12 +31,12 @@ class Settings(BaseSettings):
     frontend_port: int = os.getenv("FRONTEND_PORT", 3000)
     frontend_url: str = f"http://{frontend_host}:{frontend_port}"
 
-    # Database
+    # Database (PostGreSQL)
     db_user: str = os.getenv("DB_USER", "postgres")
     db_password: str = os.getenv("DB_PASSWORD", "password")
     db_name: str = os.getenv("DB_NAME", "swarn_db")
     db_port: int = os.getenv("DB_PORT", 5432)
-    database_url: str = f"postgresql://{db_user}:{db_password}@postgres:{db_port}/{db_name}"
+    db_url: str = f"postgresql://{db_user}:{db_password}@postgres:{db_port}/{db_name}"
 
     # PGAdmin
     pgadmin_host: str = os.getenv("PGADMIN_HOST", "localhost")
