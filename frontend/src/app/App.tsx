@@ -1,31 +1,39 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import ChatWindow from './components/ChatWindow'
-import DocumentUpload from './components/DocumentUpload'
-import Navbar from './components/Navbar'
+import { useEffect, useState } from "react";
+
+import ChatWindow from "./components/chat_window/ChatWindow";
+import DocumentUpload from "./components/document_upload/DocumentUpload";
+import Navbar from "./components/navbar/Navbar";
+
+type User = {
+  id?: string;
+  name?: string;
+  email?: string;
+} | null;
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<User>(null);
 
   useEffect(() => {
     // Check if user is authenticated on mount
-    checkAuth()
-  }, [])
+    checkAuth();
+  }, []);
 
-  const checkAuth = async () => {
+  const checkAuth = async (): Promise<void> => {
     // TODO: Check authentication status
-  }
+  };
 
   return (
     <div className="App">
       <Navbar isAuthenticated={isAuthenticated} user={user} />
+
       <main className="container">
         {isAuthenticated ? (
           <div className="dashboard">
             <div className="sidebar">
               <DocumentUpload />
             </div>
+
             <div className="main-content">
               <ChatWindow />
             </div>
@@ -39,7 +47,7 @@ function App() {
         )}
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
