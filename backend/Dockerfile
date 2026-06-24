@@ -7,6 +7,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
+    libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -14,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml pixi.lock ./
 COPY backend ./backend
 COPY config ./config
+COPY shared ./shared
 
 # Install the locked environment (this also installs agent_swarn in editable mode)
 RUN pixi install --locked

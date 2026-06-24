@@ -96,7 +96,7 @@ services:
   # Centralized log aggregation system for all services
   ########################################
 
-  # Fix permissions for Loki data volume (Grafana Recommendation: Loki runs as non-root 
+  # Fix permissions for Loki data volume (Grafana Recommendation: Loki runs as non-root
   # user, so we need to ensure the volume has correct ownership)
   loki-permissions-fix:
     image: busybox # Image with basic utilities for fixing permissions
@@ -125,7 +125,7 @@ services:
 
   ########################################
   # Node Exporter
-  ########################################  
+  ########################################
   node-exporter:
     image: prom/node-exporter:latest
     container_name: swarn-node-exporter
@@ -138,7 +138,7 @@ services:
   ########################################
   # Promtail Log Aggregator
   # Log Collector Service for Loki
-  ########################################  
+  ########################################
   promtail:
     image: grafana/promtail:2.9.4 # Log collector for Loki
     container_name: swarn-promtail # Container name for easy identification
@@ -167,7 +167,7 @@ services:
     command: # Prometheus startup command
       - "--config.file=/etc/prometheus/prometheus.yml" # Configuration file path
       - "--storage.tsdb.path=/prometheus" # Time-series database storage path
-      - "--web.enable-remote-write-receiver" 
+      - "--web.enable-remote-write-receiver"
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
 
@@ -176,7 +176,7 @@ services:
   # Distributed traces (spans) TraceQL / Tempo API
   ########################################
 
-  # Fix permissions for Tempo data volume (Grafana Recommendation: Tempo runs as non-root 
+  # Fix permissions for Tempo data volume (Grafana Recommendation: Tempo runs as non-root
   # user, so we need to ensure the volume has correct ownership)
   tempo-permissions-fix:
     image: busybox # Image with basic utilities for fixing permissions
@@ -195,8 +195,8 @@ services:
       tempo-permissions-fix:
         condition: service_completed_successfully
     ports:
-      - "3200:3200"   # HTTP API (for Grafana)
-      - "4317:4317"   # OTLP gRPC (for receiving spans)
+        - "3200:3200"   # HTTP API (for Grafana)
+        - "4317:4317"   # OTLP gRPC (for receiving spans)
     command:
       - "-target=all"
       - "-config.file=/etc/tempo/local-config.yaml"
@@ -296,7 +296,7 @@ services:
     env_file:
       - ../../.env
     ports:
-      - "8001:8001"     # quitar en prod si no necesitas acceso directo
+        - "8001:8001"     # Remove in production if you dont need quick access
     volumes:
       - ../../rag_service/data:/app/data # Shared data directory
       - ../../rag_service/app:/app/app # Backend source code for live reload
@@ -323,7 +323,7 @@ services:
     env_file:
       - ../../.env
     ports:
-      - "8000:8000" # API port: host:container
+      - "8000:8000" # API port: host:container 
     depends_on: # Wait for these services to start
       postgres: # Requires PostgreSQL
         condition: service_healthy # Wait for PostgreSQL to be healthy
@@ -350,7 +350,7 @@ services:
       dockerfile: frontend/Dockerfile # Dockerfile path
     container_name: swarn-frontend # Container name for easy identification
     ports:
-      - "5173:5173" # Dev server port: host:container
+      - "5173:80" # Dev server port: host:container (mapped to nginx port) 
     env_file:
       - ../../.env
     volumes: # Mount directories for development
