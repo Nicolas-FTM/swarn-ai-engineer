@@ -4,6 +4,10 @@ from .api.example import (
     retrieve_user
 )
 
+from .api.health import (
+    health_check
+)
+
 # Utils
 
 # RAG Functionality
@@ -13,9 +17,12 @@ from .api.retrieval import *
 
 __all__ = [
     
+    # API
     # Example
     "retrieve_user",
     "retrieve_all",
+    # Health
+    "health_check",
 
     # Generation
     "generate_chat_response",

@@ -7,6 +7,10 @@ from .generation import (
     generate_chat_response
 )
 
+from .health import (
+    health_check
+)
+
 __all__ = [
     # Example
     "retrieve_user",
@@ -15,4 +19,6 @@ __all__ = [
     # Generation
     "generate_chat_response",
 
+    # Health
+    "health_check"
 ]

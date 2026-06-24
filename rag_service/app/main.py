@@ -11,7 +11,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-from app.api import example, generation
+from app.api import health, example, generation
 
 from shared.utils.logging_config import JSONFormatter, setup_logging
 from shared.utils.opentelemetry_init import init_telemetry
@@ -69,6 +69,7 @@ async def general_exception_handler(request, exc):
     )
 
 # Include routers
+app.include_router(health.router, prefix="", tags=["health"])
 app.include_router(example.router, prefix="/api", tags=["examples"])
 app.include_router(generation.router, prefix="/api", tags=["generation"])
 
