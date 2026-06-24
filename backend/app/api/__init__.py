@@ -1,4 +1,13 @@
-from .health import HealthResponse, health_check
+from .auth import (
+    login_for_access_token,
+    read_users_me
+)
+
+from .health import (
+    HealthResponse,
+    health_check
+)
+
 from .users import (
     register_user,
     login,
@@ -18,6 +27,9 @@ from .example import (
 )
 
 __all__ = [
+    "login_for_access_token",
+    "read_users_me",
+    
     "HealthResponse",
     "health_check",
 
@@ -30,7 +42,7 @@ __all__ = [
     "upload_document",
     "list_documents",
     "delete_document",
-
+    
     "retrieve_user",
     "retrieve_all"
 ]
