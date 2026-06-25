@@ -1,7 +1,19 @@
+# Tipados 
+from typing import Any, List
+
+# SQL Alchemy
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+# Variables
 from shared.config import settings
+
+# Data Models
+from backend.app.models.user import User
+
+# Logger
+import logging
+logger = logging.getLogger(__name__)
 
 # Create engine using settings from shared.config
 engine = create_engine(
@@ -15,13 +27,37 @@ engine = create_engine(
 # Create session class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for models
-Base = declarative_base()
-
 # Dependency to get DB session in routes
 def get_db():
+    """Initialize DDBB."""
     db = SessionLocal()
+
     try:
         yield db
     finally:
         db.close()
+
+def list_users() -> List[Any]:
+    """Display information from the users table."""
+
+    db = SessionLocal()
+
+    users = db.query(User).all()
+
+    if not users:
+        logger.error("No users found in the database.")
+        return
+
+    logger.info(f"Found {len(users)} user(s):")
+    logger.info(f"\n{'ID':<5} {'Username':<15} {'Email':<25} {'Full Name':<20} {'Role':<10}")
+    logger.info("-" * 80)
+
+    for user in users:
+        logger.info(
+            f"{user.id:<5} {user.username:<15} {user.email:<25} "
+            f"{user.full_name:<20} {user.role:<10}"
+        )
+
+    logger.info("-" * 80)
+
+    return users

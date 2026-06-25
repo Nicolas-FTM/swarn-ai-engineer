@@ -3,6 +3,9 @@ Main FastAPI application entry point.
 """
 from contextlib import asynccontextmanager
 import logging
+from backend.app.api import auxiliar
+from backend.app.api.backend import chat, users
+from backend.app.api.rag_service import documents
 import uvicorn
 
 from fastapi import FastAPI
@@ -11,7 +14,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-from backend.app.api import health, users, chat, documents, example
+from backend.app.api import health
 
 from shared.utils.logging_config import JSONFormatter, setup_logging
 from shared.utils.opentelemetry_init import init_telemetry
@@ -82,13 +85,13 @@ app.include_router(health.router, prefix="", tags=["health"])
 app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(chat.router, prefix="/api", tags=['chat'])
 app.include_router(documents.router, prefix="/api", tags=["documents"])
-app.include_router(example.router, prefix="/api", tags=["examples"])
+app.include_router(auxiliar.router, prefix="/api", tags=["examples"])
 
 if __name__ == "__main__":
     uvicorn.run(
         "backend.app.main:app", 
         host="0.0.0.0",
-        port=8000,
+        port=8000, 
         reload=settings.environment == "development",
     )
    
