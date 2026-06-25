@@ -25,8 +25,5 @@ __all__ = [
     "health_check",
 
     # Generation
-    "generate_chat_response",
-
-    # Services
-    "RAGService",
+    "generate_chat_response"
 ]

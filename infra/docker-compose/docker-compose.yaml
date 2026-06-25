@@ -288,18 +288,17 @@ services:
   # functionality, including vector search
   # and document retrieval
   ########################################
-  rag-service:
+  rag_service:
     build: # Build image from Dockerfile
       context: ../.. # Build context (project root directory)
       dockerfile: rag_service/Dockerfile # Dockerfile path
-    container_name: swarn-rag-service # Container name for easy identifications
+    container_name: swarn-rag_service # Container name for easy identifications
     env_file:
       - ../../.env
     ports:
         - "8001:8001"     # Remove in production if you dont need quick access
     volumes:
-      - ../../rag_service/data:/app/data # Shared data directory
-      - ../../rag_service/app:/app/app # Backend source code for live reload
+      - ../../rag_service:/app/rag_service # Data directory
       - ../../shared:/app/shared # Config source code for live reload
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
@@ -308,7 +307,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    command: pixi run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload # Start command with hot-reload
+    command: pixi run uvicorn rag_service.app.main:app --host 0.0.0.0 --port 8001 --reload # Start command with hot-reload
 
 
   ########################################
@@ -332,13 +331,14 @@ services:
       # ollama: # Requires Ollama
       #   condition: service_healthy # Wait for Ollama to be healthy
     volumes: # Mount directories for development
-      - ../../backend/data:/app/data # Data directory
-      - ../../backend/app:/app/app # Backend source code for live reload
+      # - ../../backend/data:/app/data # Data directory
+      - ../../backend:/app/backend # Data directory
+      # - ../../backend/app:/app/app # Backend source code for live reload
       - ../../config:/app/config # Config source code for live reload
       - ../../shared:/app/shared # Shared Data Directory
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
-    command: pixi run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload # Start command with hot-reload
+    command: pixi run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload # Start command with hot-reload
 
   ########################################
   # Frontend Web Application
@@ -350,15 +350,15 @@ services:
       dockerfile: frontend/Dockerfile # Dockerfile path
     container_name: swarn-frontend # Container name for easy identification
     ports:
-      - "5173:80" # Dev server port: host:container (mapped to nginx port) 
+      - "5173:5173" # Dev server port: host:container (mapped to nginx port) 
     env_file:
       - ../../.env
     volumes: # Mount directories for development
-      - ../../frontend/src:/app/src # Frontend source code for hot-reload
-      - ../../frontend/public:/app/public # Static assets
+      - ../../frontend:/app/frontend # Frontend source code for hot-reload
+      - /app/frontend/node_modules # Avoid that the volume overlap node_modules
     networks:
       - swarn-network # Connect to swarn-network for service-to-service communication
-    command: npm run dev # Start development server with hot-reload
+    command: npm run dev -- --host 0.0.0.0 # Start development server with hot-reload
 
   ########################################
   # Nginx Reverse Proxy

@@ -3,7 +3,7 @@ LangGraph agent graph definition.
 """
 from langgraph.graph import StateGraph, START, END
 from shared.schemas.agent import AgentState
-from app.services.rag_service import RAGService
+from backend.app.services.rag_service import RAGService
 from langchain_ollama import ChatOllama
 from typing import TypedDict
 

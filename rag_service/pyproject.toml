@@ -1,5 +1,5 @@
 [project]
-name = "agent_swarn"
+name = "rag_service"
 authors = [{name = "Nicolas-FTM", email = "nicolasfelipetm@gmail.com"}]
 description = "Multi-agent RAG chatbot with LangGraph, FastAPI, and observability"
 requires-python = ">= 3.12"
@@ -104,7 +104,7 @@ packaging = "<24.0"
 setuptools = "<81"
 
 [tool.pixi.pypi-dependencies]
-agent_swarn = { path = ".", editable = true }
+rag_service = { path = ".", editable = true }
 
 [tool.black]
 line-length = 100

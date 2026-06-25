@@ -4,7 +4,7 @@ Chat endpoints for conversational RAG.
 from fastapi import APIRouter, HTTPException, status
 from shared.schemas.chat import ChatRequest, ChatResponse
 from shared.schemas.agent import AgentState
-from app.agents.graph import agent_graph
+from backend.app.agents.graph import agent_graph
 import logging
 
 router = APIRouter()

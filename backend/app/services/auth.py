@@ -3,8 +3,8 @@ from jose import jwt
 from passlib.context import CryptContext
 from typing import Optional
 from shared.config import settings
-from app.models.user import User
-from app.database.session import get_db
+from backend.app.models.user import User
+from backend.app.database.session import get_db
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session

@@ -5,7 +5,7 @@ import logging
 
 from shared.utils.llm_tracing import langfuse_client
 from shared.config import settings
-from app.agents.runner import call_llm
+from backend.app.agents.runner import call_llm
 
 from opentelemetry import trace
 from langfuse.decorators import observe

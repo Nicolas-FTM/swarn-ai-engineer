@@ -131,6 +131,18 @@ docker compose -f infra/docker-compose/docker-compose.yaml ps [-a]
 docker exec -it <container-name> bash
 ```
 
+<b> Run the uvicorn environment </b>
+
+```bash
+pixi run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+```
+
+or 
+
+```bash
+pixi run uvicorn rag_service.app.main:app --host 0.0.0.0 --port 8001
+```
+
 <b> Check logs of a container </b>
 
 ```bash

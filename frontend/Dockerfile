@@ -1,8 +1,8 @@
-# Builder stage - Build the frontend application
-FROM node:21-alpine
+# Build the frontend application with a Node version (mandatory to be LTS even version)
+FROM node:22-alpine 
 
 # Set working directory
-WORKDIR /app
+WORKDIR /app/frontend
 
 # First, copy the manifests (better cache)
 COPY frontend/package.json frontend/package-lock.json ./
@@ -11,10 +11,7 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
 # Copy the rest of the project
-COPY frontend/ .
+COPY frontend/ ./
 
 # Expose the Vite required port
 EXPOSE 5173
-
-# IMPORTANT: --host 0.0.0.0 so that it works within Docker
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

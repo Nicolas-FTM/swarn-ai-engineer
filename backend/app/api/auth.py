@@ -3,14 +3,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import timedelta
-from app.services.auth import (
+from backend.app.services.auth import (
     authenticate_user,
     create_access_token,
     get_current_user
 )
-from app.database.session import get_db
-from app.models.user import User
-from app.models.auth import Token
+from backend.app.database.session import get_db
+from backend.app.models.user import User
+from backend.app.models.auth import Token
 from shared.config import settings
 from shared.schemas.users import UserResponse
 

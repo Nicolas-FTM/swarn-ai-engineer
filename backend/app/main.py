@@ -11,12 +11,14 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-from app.api import health, users, chat, documents, example
+from backend.app.api import health, users, chat, documents, example
 
 from shared.utils.logging_config import JSONFormatter, setup_logging
 from shared.utils.opentelemetry_init import init_telemetry
 from shared.utils.metrics import init_metrics, get_metrics_app
 from shared.config import settings
+
+from backend.scripts import seed_users
 
 # Configure logging
 setup_logging(level=settings.log_level)
@@ -32,7 +34,15 @@ async def lifespan(app: FastAPI):
     Lifespan context manager for startup and shutdown events.
     """
     logger.info("Application startup")
+
+    # Creation of dummy users 
+    seed_users.main()
+
+    logger.info("Dummy users precharged")
+
+    
     yield
+    
     logger.info("Application shutdown")
 
 # Create FastAPI app
@@ -76,8 +86,9 @@ app.include_router(example.router, prefix="/api", tags=["examples"])
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app.main:app",
+        "backend.app.main:app", 
         host="0.0.0.0",
         port=8000,
         reload=settings.environment == "development",
     )
+   

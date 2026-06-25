@@ -11,7 +11,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-from app.api import health, example, generation
+from rag_service.app.api import health, example, generation
 
 from shared.utils.logging_config import JSONFormatter, setup_logging
 from shared.utils.opentelemetry_init import init_telemetry
@@ -75,7 +75,7 @@ app.include_router(generation.router, prefix="/api", tags=["generation"])
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app.main:app",
+        "rag_service.app.main:app",
         host="0.0.0.0",
         port=8001,
         reload=settings.environment == "development",
