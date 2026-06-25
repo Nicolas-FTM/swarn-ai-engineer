@@ -1,11 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import eslintPlugin from 'vite-plugin-eslint'
 import type { UserConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), eslintPlugin()],
+  plugins: [react()],
 
   server: {
     port: 5173,
@@ -17,6 +16,9 @@ export default defineConfig({
         secure: false,
       },
     },
+    watch: {
+      usePolling: true
+    }
   },
 
   build: {

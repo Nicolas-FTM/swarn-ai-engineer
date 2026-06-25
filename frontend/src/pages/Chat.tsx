@@ -15,7 +15,7 @@ const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! Welcome to Sweet Haven Bakery. How can I help you today?",
+      text: "Hello! Welcome to the Bakery. How can I help you today?",
       sender: 'bot',
       timestamp: new Date()
     }

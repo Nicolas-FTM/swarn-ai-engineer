@@ -19,7 +19,7 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-pink-50">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-xl shadow-lg">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Sweet Haven Bakery</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Bakery</h1>
           <p className="mt-2 text-sm text-gray-600">Join us for a delightful experience</p>
         </div>
 

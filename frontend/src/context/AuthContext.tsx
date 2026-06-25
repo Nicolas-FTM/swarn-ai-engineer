@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AuthState, User, Token, LoginData } from '../types/auth';
+import { AuthState, LoginData } from '../types/auth';
 import { apiService } from '../services/api';
- 
+
 // Create AuthContext with default values
 const AuthContext = createContext<{
   state: AuthState;
@@ -22,7 +22,9 @@ const AuthContext = createContext<{
 });
 
 // AuthProvider component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, setState] = useState<AuthState>({
     user: null,
     token: localStorage.getItem('token') || null,
@@ -56,7 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error: null,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Login failed';
       setState(prev => ({
         ...prev,
         isLoading: false,

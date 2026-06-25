@@ -11,7 +11,7 @@ const Landing: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Sweet Haven Bakery</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Bakery</h1>
             </div>
             <button
               onClick={() => navigate('/login')}
@@ -87,7 +87,7 @@ const Landing: React.FC = () => {
           <div className="mt-10 grid grid-cols-1 gap-6">
             <blockquote className="bg-white p-8 rounded-lg shadow-md">
               <p className="text-lg text-gray-700 italic">
-                "The croissants at Sweet Haven Bakery are the best I've ever tasted. The attention to detail in every pastry is truly remarkable."
+                "The croissants at Bakery are the best I've ever tasted. The attention to detail in every pastry is truly remarkable."
               </p>
               <footer className="mt-4 text-gray-600">— Sarah M., Regular Customer</footer>
             </blockquote>
@@ -114,7 +114,7 @@ const Landing: React.FC = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2026 Sweet Haven Bakery. All rights reserved.</p>
+          <p>&copy; 2026 Bakery. All rights reserved.</p>
           <p className="mt-2 text-sm text-gray-400">Handcrafted with love in every bite</p>
         </div>
       </footer>
