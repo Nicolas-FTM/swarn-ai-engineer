@@ -3,15 +3,17 @@ from jose import jwt
 import bcrypt
 from typing import Optional
 from shared.config import settings
-from backend.app.models.user import User
-from backend.app.database.session import get_db
-from fastapi import Depends, HTTPException, status
+from backend.app.models.user import User_Schema_DDBB
+from backend.app.database.session import get_user_username, db
+from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
 
 # OAuth2 password bearer scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
+#####################
+# (Un)Hash passwords
+#####################
 def get_password_hash(password: str) -> str:
     """Hash a password using bcrypt."""
     pwd_bytes = password.encode("utf-8")
@@ -26,6 +28,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         hashed_password.encode("utf-8"),
     )
 
+
+#####################
+# (De)Code jwt tokens
+#####################
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
@@ -49,20 +55,22 @@ def decode_access_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-def get_user(db: Session, username: str) -> Optional[User]:
-    """Get a user by username."""
-    return db.query(User).filter(User.username == username).first()
-
-def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
+#####################
+# Authenticate User
+#####################
+def authenticate_user(username: str, password: str) -> Optional[User_Schema_DDBB]:
     """Authenticate a user by username and password."""
-    user = get_user(db, username)
+    user = get_user_username(username)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
         return None
     return user
 
-def get_current_user(db: Session = Depends(get_db)) -> User:
+##############################
+# Get User from the JWT Token
+##############################
+def get_current_user() -> User_Schema_DDBB:
     """Get the current authenticated user from the JWT token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -79,7 +87,7 @@ def get_current_user(db: Session = Depends(get_db)) -> User:
     except Exception:
         raise credentials_exception
 
-    user = get_user(db, username)
+    user = get_user_username(db, username)
     if user is None:
         raise credentials_exception
     return user

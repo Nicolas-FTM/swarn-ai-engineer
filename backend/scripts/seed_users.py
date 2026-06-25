@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.app.database.session import SessionLocal
-from backend.app.models.user import User
+from backend.app.models.user import User_Schema_DDBB
 from shared.config import settings
 from backend.app.services.auth import get_password_hash
 
@@ -68,7 +68,7 @@ def create_users(db: Session) -> None:
     created_users = []
     for user_data in users_data:
         # Check if user already exists
-        existing_user = db.query(User).filter(User.username == user_data["username"]).first()
+        existing_user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.username == user_data["username"]).first()
         if existing_user:
             logger.info(f"User {user_data['username']} already exists, skipping...")
             created_users.append(existing_user)
@@ -76,7 +76,7 @@ def create_users(db: Session) -> None:
 
         # Create new user
         hashed_password = get_password_hash(user_data["password"])
-        new_user = User(
+        new_user = User_Schema_DDBB(
             username=user_data["username"],
             email=user_data["email"],
             hashed_password=hashed_password,

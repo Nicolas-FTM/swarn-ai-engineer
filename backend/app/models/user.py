@@ -14,7 +14,7 @@ class RoleEnum(str, enum.Enum):
     cofounder = "cofounder"  # Company Co-founder
     admin = "admin"  # Admin role for system management
 
-class User(Base):
+class User_Schema_DDBB(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
