@@ -1,5 +1,5 @@
 """
-Script to seed the database with initial users for the Sweet Haven Bakery application.
+Script to seed the database with initial users for the application.
 
 This script creates: 1. One admin user (cofounder role) with full access
 2. One sales user (sales role) with customer access
@@ -9,50 +9,58 @@ This script creates: 1. One admin user (cofounder role) with full access
 
 import sys
 import os
-from datetime import datetime
 from sqlalchemy.orm import Session
-from hashlib import sha256
-import secrets
 
 # Add the backend directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database.session import SessionLocal
-from app.models.user import User
-from app.shared.config import settings
-from app.services.auth import get_password_hash
+from backend.app.database.session import SessionLocal
+from backend.app.models.user import User
+from shared.config import settings
+from backend.app.services.auth import get_password_hash
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_users(db: Session) -> None:
     """Create initial users for the application."""
-    # Define users to create
+    # Define users to create   
     users_data = [
         {
+            "username": "admin",
+            "email": "admin@bakery.com",
+            "password": "admin123456",
+            "full_name": "admin",
+            "role": "admin"
+        },
+        {
             "username": "cofounder",
-            "email": "cofounder@sweethavenbakery.com",
-            "full_name": "Sweet Haven Co-Founder",
-            "role": "cofounder",
-            "password": "cofounder123"
+            "email": "cofounder@bakery.com",
+            "password": "cofounder123456",
+            "full_name": "Co-Founder",
+            "role": "cofounder"
         },
         {
             "username": "sales_agent",
-            "email": "sales@sweethavenbakery.com",
+            "password": "sales123456",
+            "email": "sales@bakery.com",
             "full_name": "Sales Department",
-            "role": "sales",
-            "password": "sales123"
+            "role": "sales"
         },
         {
             "username": "bakery_staff",
-            "email": "baker@sweethavenbakery.com",
+            "email": "baker@bakery.com",
+            "password": "baker123456",
             "full_name": "Head Baker",
-            "role": "baker",
-            "password": "baker123"
+            "role": "baker"
         },
         {
             "username": "hr_manager",
-            "email": "hr@sweethavenbakery.com",
+            "email": "hr@bakery.com",
+            "password": "hr123456",
             "full_name": "HR Manager",
-            "role": "hr",
-            "password": "hr123"
+            "role": "hr"
         }
     ]
 
@@ -62,7 +70,7 @@ def create_users(db: Session) -> None:
         # Check if user already exists
         existing_user = db.query(User).filter(User.username == user_data["username"]).first()
         if existing_user:
-            print(f"User {user_data['username']} already exists, skipping...")
+            logger.info(f"User {user_data['username']} already exists, skipping...")
             created_users.append(existing_user)
             continue
 
@@ -73,14 +81,13 @@ def create_users(db: Session) -> None:
             email=user_data["email"],
             hashed_password=hashed_password,
             full_name=user_data["full_name"],
-            role=user_data["role"],
-            is_active=True
+            role=user_data["role"]    
         )
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
         created_users.append(new_user)
-        print(f"Created user: {new_user.username} with role: {new_user.role}")
+        logger.info(f"Created user: {new_user.username} with role: {new_user.role}")
 
     return created_users
 
@@ -88,14 +95,14 @@ def main() -> None:
     """Main function to execute the seeding."""
     db = SessionLocal()
     try:
-        print("Seeding users...")
+        logger.info("Seeding users...")
         users = create_users(db)
-        print(f"Successfully created {len(users)} users")
+        logger.info(f"Successfully created {len(users)} users")
     except Exception as e:
-        print(f"Error seeding users: {e}")
+        logger.error(f"Error seeding users: {e}")
         db.rollback()
     finally:
         db.close()
 
 if __name__ == "__main__":
-    main()
+    main()    
