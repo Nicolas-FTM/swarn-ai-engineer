@@ -1,47 +1,55 @@
-# app/api/example.py
-from fastapi import APIRouter, Depends, HTTPException, status
-from shared.schemas.example import ExampleResponse, ExampleRequest
-import logging
+# Router
+from fastapi import APIRouter, HTTPException, status
 
+# Responses Model
+from shared.schemas.example import ExampleResponse
+
+# Langfuse Client for LLM calls
 from shared.utils.llm_tracing import langfuse_client
-from shared.config import settings
-from backend.app.agents.runner import call_llm
-
-from opentelemetry import trace
 from langfuse.decorators import observe
 
-router = APIRouter()
+# Environment Variables
+from shared.config import settings
+
+# Call LLM 
+from backend.app.agents.runner import call_llm
+
+# DDBB Calls
+from backend.app.database.session import list_users
+
+# Traces
+from opentelemetry import trace
+
+# Logger
+import logging
 logger = logging.getLogger(__name__)
 
-# Simulación de una "base de datos"
-fake_db = {
-            1: {
-                "id": 1,
-                "name": "Ana",
-                "email": "ana@mail.com"
-                },
-            2: {
-                "id": 2,
-                "name": "Juan",
-                "email": "juan@mail2.com"
-            },
-            3: {
-                "id": 3,
-                "name": "María",
-                "email": "maria@mail.com"
-            }
-        }
+router = APIRouter()
 
-@router.post("/retrieve/{id}", response_model=ExampleResponse)
-async def retrieve_user(id: int):
+@router.post("/auxiliar_fun")
+async def auxiliar_fun():
     """
-    Retrieve an example.
+    Use internal function.
     """
-    example = fake_db.get(id)
-    if not example:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found")
+    span = trace.get_current_span()
+    otel_trace_id = format(span.get_span_context().trace_id, "032x")
+
+    logger.info("Fetching users...", extra={"otel_trace_id": otel_trace_id})
+    users = list_users()
+    logger.info(users, extra={"otel_trace_id": otel_trace_id})
+
+    return users
     
-    return example
+# @router.post("/retrieve/{id}", response_model=ExampleResponse)
+# async def retrieve_user(id: int):
+#     """
+#     Retrieve an example.
+#     """
+#     example = fake_db.get(id)
+#     if not example:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found")
+    
+#     return example
 
 @router.get("/retrieve", response_model=ExampleResponse)
 @observe(name="example/retrieve_all")
@@ -57,16 +65,7 @@ async def retrieve_all():
         name="example/retrieve_all",
         metadata={"otel_trace_id": otel_trace_id},
     )
-
-    examples = list(fake_db.values())
-
-    if len(examples) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Examples List Empty",
-        )
     
     response = call_llm(prompt="Hola Chatgpt", otel_trace_id=otel_trace_id) 
     logger.info(response, extra={"otel_trace_id": otel_trace_id})
-    
-    return fake_db[1]
+
