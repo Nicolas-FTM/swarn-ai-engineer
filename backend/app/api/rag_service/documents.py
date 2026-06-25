@@ -4,7 +4,11 @@ Document upload and management endpoints.
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from shared.schemas.documents import DocumentResponse
 
-router = APIRouter()
+# Definition of the router
+router = APIRouter(
+    prefix="/api/rag_service",
+    tags=["documents"]
+)
 
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(file: UploadFile = File(...)):

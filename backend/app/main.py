@@ -1,28 +1,46 @@
 """
 Main FastAPI application entry point.
 """
-from contextlib import asynccontextmanager
-import logging
-from backend.app.api import auxiliar
-from backend.app.api.backend import chat, users
-from backend.app.api.rag_service import documents
-import uvicorn
-
+# FastAPI (API REST)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+
+# Uvicorn (Server)
+import uvicorn
+
+# Routers
+from backend.app.api import (
+    auxiliar,
+    health
+)
+from backend.app.api.frontend import (
+    auth,
+    chat,
+    users
+)
+from backend.app.api.rag_service import (
+    documents
+)
+
+# Opentelemetry for Prometheus, Loki and Tempo
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-
-from backend.app.api import health
-
-from shared.utils.logging_config import JSONFormatter, setup_logging
 from shared.utils.opentelemetry_init import init_telemetry
 from shared.utils.metrics import init_metrics, get_metrics_app
-from shared.config import settings
 
+# Pre and Post Actions at the time of initializing the app
+from contextlib import asynccontextmanager
 from backend.scripts import seed_users
 
+# Logger setup
+from shared.utils.logging_config import setup_logging
+import logging
+
+# Environment Variables
+from shared.config import settings
+
+# Logger
 # Configure logging
 setup_logging(level=settings.log_level)
 logger = logging.getLogger("backend")
@@ -81,11 +99,12 @@ async def general_exception_handler(request, exc):
     )
 
 # Include routers
-app.include_router(health.router, prefix="", tags=["health"])
-app.include_router(users.router, prefix="/api", tags=["users"])
-app.include_router(chat.router, prefix="/api", tags=['chat'])
-app.include_router(documents.router, prefix="/api", tags=["documents"])
-app.include_router(auxiliar.router, prefix="/api", tags=["examples"])
+app.include_router(health.router)
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(chat.router)
+app.include_router(documents.router)
+app.include_router(auxiliar.router)
 
 if __name__ == "__main__":
     uvicorn.run(

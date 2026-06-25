@@ -7,7 +7,11 @@ from shared.schemas.agent import AgentState
 from backend.app.agents.graph import agent_graph
 import logging
 
-router = APIRouter()
+# Definition of the router
+router = APIRouter(
+    prefix="/api/backend",
+    tags=["chat"]
+)
 logger = logging.getLogger(__name__)
 
 @router.post("/chat", response_model=ChatResponse)

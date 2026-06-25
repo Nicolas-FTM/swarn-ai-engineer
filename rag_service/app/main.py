@@ -1,21 +1,40 @@
 """
 RAG Service FastAPI application entry point.
 """
-from contextlib import asynccontextmanager
-import logging
-import uvicorn
 
+# FastAPI (API REST)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+
+# Uvicorn (Server)
+import uvicorn
+
+# Routers
+from rag_service.app.api import (
+    health,
+    auxiliar
+)
+
+# from rag_service.app.api.backend import (
+#     health,
+#     auxiliar
+# )
+
+# Opentelemetry for Prometheus, Loki and Tempo
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-
-from rag_service.app.api import health, example, generation
-
-from shared.utils.logging_config import JSONFormatter, setup_logging
 from shared.utils.opentelemetry_init import init_telemetry
 from shared.utils.metrics import init_metrics, get_metrics_app
+
+# Pre and Post Actions at the time of initializing the app
+from contextlib import asynccontextmanager
+
+# Logger setup
+from shared.utils.logging_config import setup_logging
+import logging
+
+# Environment Variables
 from shared.config import settings
 
 # Configure logging
@@ -69,9 +88,8 @@ async def general_exception_handler(request, exc):
     )
 
 # Include routers
-app.include_router(health.router, prefix="", tags=["health"])
-app.include_router(example.router, prefix="/api", tags=["examples"])
-app.include_router(generation.router, prefix="/api", tags=["generation"])
+app.include_router(health.router)
+app.include_router(auxiliar.router)
 
 if __name__ == "__main__":
     uvicorn.run(

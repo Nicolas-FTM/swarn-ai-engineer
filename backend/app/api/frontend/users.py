@@ -4,7 +4,11 @@ User management endpoints.
 from fastapi import APIRouter, Depends, HTTPException, status
 from shared.schemas.users import UserCreate, UserResponse
 
-router = APIRouter()
+# Definition of the router
+router = APIRouter(
+    prefix="/api/backend",
+    tags=["users"]
+)
 
 @router.post("/register", response_model=UserResponse)
 async def register_user(user: UserCreate):

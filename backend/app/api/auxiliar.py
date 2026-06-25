@@ -24,7 +24,11 @@ from opentelemetry import trace
 import logging
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+# Definition of the router
+router = APIRouter(
+    prefix="/api",
+    tags=["auxiliar"]
+)
 
 @router.post("/auxiliar_fun")
 async def auxiliar_fun():
