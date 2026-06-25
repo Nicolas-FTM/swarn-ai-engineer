@@ -116,6 +116,22 @@ ollama pull llama3.1
 ollama list
 ```
 
+<b> 7.- Set the PGAdmin UI for PostgreSQL </b> 
+
+Definition: Creation of the server to visualize the PostGreSQL data 
+
+Steps:
+
+<ol>
+  <li>Enter into PGAdmin UI</li>
+  <li>Right click in servers > Register > Server </li>
+  <li>Name: Swarn_DDBB (or whatever you like)</li>
+  <li>Host name/address: postgres</li>
+  <li>Port: defined in .env (in .example.env: "5432")</li>
+  <li>Username: defined in .env (in .example.env: postgres)</li>
+  <li>Password: defined in .env (in .example.env: password)</li>
+</ol>
+
 > [!TIP]
 > <b> Sandbox of useful commands for yoour deployment </b>
 
