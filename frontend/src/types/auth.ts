@@ -11,6 +11,7 @@ export interface User {
   username: string;
   email: string;
   role: 'baker' | 'sales' | 'hr' | 'cofounder' | 'admin';
+  full_name: string;
 }
 
 /**

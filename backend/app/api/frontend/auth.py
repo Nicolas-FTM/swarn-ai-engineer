@@ -54,4 +54,4 @@ def login(payload: LoginRequest):
 def get_me(current_user: User_Schema_DDBB = Depends(get_current_user)):
     """Get info of the user"""
 
-    return UserResponse(id=str(current_user.id), username=current_user.username, email=current_user.email, role=current_user.role)
+    return UserResponse(id=str(current_user.id), username=current_user.username, email=current_user.email, role=current_user.role, full_name=current_user.full_name)
