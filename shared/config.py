@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     # JWT
     jwt_secret: str = os.getenv("JWT_SECRET", "your-secret-key-change-this-in-production")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
-    jwt_expiration_hours: int = os.getenv("JWT_EXPIRATION_HOURS", 24)
+    jwt_access_token_expire_minutes: int = os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 60)
 
     # Qdrant
     qdrant_host: str = os.getenv("QDRANT_HOST", "localhost")
