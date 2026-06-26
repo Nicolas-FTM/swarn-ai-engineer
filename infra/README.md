@@ -52,8 +52,8 @@ Definition: delete docker images, services and volumes
 docker compose -f infra/docker-compose/docker-compose.yaml down -v --rmi all --remove-orphans
 ```
 
-<b> 1.- Create the .env file </b>
-Definition: copy the .env.example to a new file named .env
+<b> 1.- Create and fill the .env file </b>
+Definition: copy the .env.example to a new file named .env and fill it
 
 [Windows]
 ```bash
@@ -65,7 +65,16 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-<b> 2.- Create all the images </b>
+<b> 2.- Set your apriori environment variables </b> 
+Definition: set the apriori variables of the .env file.
+
+E.g: 
+- Qdrant API Key secret (You have to invent it)
+- JWT Secret (You have to invent it)
+- Other info as host, ports, ...
+
+
+<b> 3.- Create all the images </b>
 
 Definition: creation of all the images specified in field build: dockerfile inside each service in the docker-compose.yaml
 * [-f] Directory of the docker-compose.yaml
@@ -75,7 +84,7 @@ Definition: creation of all the images specified in field build: dockerfile insi
 docker compose -f infra/docker-compose/docker-compose.yaml build --no-cache
 ```
 
-<b> 3.- Create and start all containers </b>
+<b> 4.- Create and start all containers </b>
 
 Definition: once we have all the images of the services, this command builds, (re)creates, starts, and attaches to containers for every service.
 * [-f] Directory of the docker-compose.yaml
@@ -88,23 +97,14 @@ Definition: once we have all the images of the services, this command builds, (r
 docker compose -f infra/docker-compose/docker-compose.yaml up -d --remove-orphans --force-recreate
 ```
 
-<b> 4.- Set your environment variables </b> 
+<b> 5.- Set your aposteriori environment variables </b> 
 
-Definition: obtain your api keys of all the services and copy them to .env
+Definition: obtain your api keys of all the services and copy them to .env, or generate the required info
 
-Example: you create your account in Langfuse, create organization + members + project, and you obtain secret key and public key. Put that values in the fields on .env
+E.g: 
 
-<b> 5.- Reset your environment variables </b> 
+- Langfuse API Key: you create your account in Langfuse, create organization + members + project, and you obtain secret key and public key. Put that values in the fields on .env
 
-Definition: Once you have been set the environment variables, you are going to make the steps 2 and 3 just for backend, frontend and rag-service. Keep in mind this step is to copy the new .env file to each container
-
-```bash
-docker compose -f infra/docker-compose/docker-compose.yaml build --no-cache
-```
-
-```bash
-docker compose -f infra/docker-compose/docker-compose.yaml up frontend backend rag-service -d --remove-orphans --force-recreate
-```
 
 <b> 6.- Download the ollama model </b> 
 
@@ -131,6 +131,18 @@ Steps:
   <li>Username: defined in .env (in .example.env: postgres)</li>
   <li>Password: defined in .env (in .example.env: password)</li>
 </ol>
+
+<b> 8.- Reset your main services (frontend, backend and rag_service) </b> 
+
+Definition: Once you have been set the environment variables, you are going to make the steps 2 and 3 just for backend, frontend and rag_service. Keep in mind this step is to copy the new .env file to each container
+
+```bash
+docker compose -f infra/docker-compose/docker-compose.yaml build frontend backend rag_service --no-cache
+```
+
+```bash
+docker compose -f infra/docker-compose/docker-compose.yaml up frontend backend rag_service -d --remove-orphans --force-recreate
+```
 
 > [!TIP]
 > <b> Sandbox of useful commands for yoour deployment </b>
@@ -195,6 +207,10 @@ docker exec -it swarn-ollama bash
 ollama pull llama3.1
 ollama list
 ``` -->
+
+### 6. How to access to the services
+
+TODO
 
 ## What services are in this infra
 
