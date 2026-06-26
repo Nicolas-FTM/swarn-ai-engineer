@@ -5,14 +5,16 @@ from fastapi import APIRouter, HTTPException, status
 from shared.schemas.chat import ChatRequest, ChatResponse
 from shared.schemas.agent import AgentState
 from backend.app.agents.graph import agent_graph
+
+# Logger
 import logging
+logger = logging.getLogger(__name__)
 
 # Definition of the router
 router = APIRouter(
-    prefix="/api/backend",
+    prefix="/api/frontend",
     tags=["chat"]
 )
-logger = logging.getLogger(__name__)
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest) -> ChatResponse:

@@ -1,6 +1,6 @@
 // Imports
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { apiService } from '../services/api';
+import { getUser, login } from '../services/backend/auth.service';
 import { AuthState, LoginCredentials, User } from '../types/auth';
 
 // Possible Actions for the context
@@ -55,8 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    apiService
-      .getUser()
+    getUser()
       .then((user) => {
         localStorage.setItem('user', JSON.stringify(user));
         dispatch({ type: 'RESTORE_SESSION', payload: user });
@@ -67,13 +66,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<boolean> => {
+  const login_context = async (credentials: LoginCredentials): Promise<boolean> => {
     dispatch({ type: 'LOGIN_START' });
     try {
-      const tokenData = await apiService.login(credentials);
+
+      const tokenData = await login(credentials);
       localStorage.setItem('token', tokenData.access_token);
 
-      const user = await apiService.getUser();
+      const user = await getUser();
       localStorage.setItem('user', JSON.stringify(user));
 
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     dispatch({ type: 'LOGOUT' });
   };
 
-  return <AuthContext.Provider value={{ state, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ state: state, login: login_context, logout: logout }}>{children}</AuthContext.Provider>;
 };
 
 // Export of the useAuth Context

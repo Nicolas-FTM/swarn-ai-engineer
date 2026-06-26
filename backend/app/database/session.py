@@ -45,7 +45,12 @@ def get_db():
 def list_users() -> List[Any]:
     """Display information from the users table."""
 
-    users = db.query(User_Schema_DDBB).all()
+    try:
+        users = db.query(User_Schema_DDBB).all()
+    except Exception as e:
+        logger.error("There was a problem in the connection with the DDBB")
+    finally:
+        db.close()
 
     if not users:
         logger.error("No users found in the database.")
@@ -67,14 +72,26 @@ def list_users() -> List[Any]:
 
 def get_user(id: str) -> User_Schema_DDBB:
     """Get a user by id."""
-    user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.id == id).first()
+    try:
+        user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.id == id).first()
+    except Exception as e:
+        logger.error("There was a problem in the connection with the DDBB")
+    finally:
+        db.close()
+        
     if user is None:
         raise HTTPException(status_code=401, detail=f"User not found by id: {id}")
     return user
 
 def get_user_username(username: str) -> User_Schema_DDBB:
     """Get a user by username."""
-    user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.username == username).first()
+    try:
+        user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.username == username).first()
+    except Exception as e:
+        logger.error("There was a problem in the connection with the DDBB")
+    finally:
+        db.close()
+    
     if user is None:
         raise HTTPException(status_code=401, detail=f"User not found by username: {id}")
     return user

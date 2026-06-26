@@ -6,7 +6,7 @@ from shared.schemas.users import UserCreate, UserResponse
 
 # Definition of the router
 router = APIRouter(
-    prefix="/api/backend",
+    prefix="/api/frontend",
     tags=["users"]
 )
 

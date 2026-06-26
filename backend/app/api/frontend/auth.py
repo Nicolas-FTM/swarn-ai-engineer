@@ -29,9 +29,13 @@ from shared.config import settings
 # Models
 from shared.schemas.users import UserResponse
 
+# Logger
+import logging
+logger = logging.getLogger(__name__)
+
 # Definition of the router
 router = APIRouter(
-    prefix="/api/backend",
+    prefix="/api/frontend",
     tags=["auth"]
 )
 
@@ -40,7 +44,7 @@ def login(payload: LoginRequest):
     """Login for the Frontend"""
     user = get_user_username(username = payload.username)
 
-    if not user or not verify_password(payload.password, user.hashed_password):
+    if (not user) or (not verify_password(payload.password, user.hashed_password)):
         raise HTTPException(status_code=401, detail="Incorrect Username or Password")
 
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -48,4 +52,6 @@ def login(payload: LoginRequest):
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User_Schema_DDBB = Depends(get_current_user)):
-    return UserResponse(id=str(current_user.id), username=current_user.username)
+    """Get info of the user"""
+
+    return UserResponse(id=str(current_user.id), username=current_user.username, email=current_user.email, role=current_user.role)
