@@ -21,7 +21,7 @@ from pathlib import Path
 from fastapi import APIRouter
 
 # Project Imports
-from app.services.ingestion.runner import run_ingestion, DATA_ROOT
+from rag_service.app.services.ingestion.runner import run_ingestion, DATA_ROOT
 
 # ============================================================================
 # Constants
