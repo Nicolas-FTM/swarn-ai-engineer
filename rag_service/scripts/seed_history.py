@@ -27,6 +27,9 @@ def create_sales() -> None:
     # NaN -> None with the ide of Pydantic doesnt fail with aditional fields
     df = df.where(pd.notnull(df), None)
     df = df.replace({"NA": None, "N/A": None, "nan": None, "None": None})
+    df.drop_duplicates()
+
+    logger.info(f"Number of Sales: {df.shape[0]}")
 
     records: list[SaleRecord] = []
     for i, row in enumerate(df.to_dict(orient="records")):
@@ -78,7 +81,7 @@ def create_reviews() -> None:
             review_title=r.review_title,
             review_content=r.review_content 
         ) 
-
+ 
         flag = create(model=Review_Schema_DDBB,
             instance=review_record,
             unique_filters={

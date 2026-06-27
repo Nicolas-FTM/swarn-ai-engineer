@@ -13,7 +13,7 @@ This module provides:
 # Packages
 # ============================================================================
 # Types
-from typing import Any, Type
+from typing import Any, Type 
 
 # Context Managers
 from contextlib import contextmanager
@@ -76,6 +76,7 @@ def create(
     model: Type[DeclarativeBase],
     instance: DeclarativeBase,
     unique_filters: dict[str, Any] | None = None,
+    logger_flag: bool = False
 ) -> bool:
     """
     Create a new database record.
@@ -114,10 +115,11 @@ def create(
             db.commit()
             db.refresh(instance)
 
-            logger.info(
-                "Created %s",
-                model.__name__,
-            )
+            if logger:
+                logger.info(
+                    "Created %s",
+                    model.__name__,
+                )
 
             return True
 
@@ -151,7 +153,7 @@ def get(
 
         first:
             If True, returns only the first matching record.
-
+ 
     Returns:
         A list of records, a single record, or None.
     """
