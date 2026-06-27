@@ -19,7 +19,6 @@ COPY backend/pyproject.toml backend/pixi.lock ./
 RUN pixi install --locked
 
 COPY backend ./backend
-COPY config ./config
 COPY shared ./shared
 
 # Health check

@@ -19,7 +19,6 @@ COPY rag_service/pyproject.toml rag_service/pixi.lock ./
 RUN pixi install --locked
 
 COPY rag_service ./rag_service
-COPY config ./config
 COPY shared ./shared
 
 # Install the locked environment (this also installs agent_swarn in editable mode)
