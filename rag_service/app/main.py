@@ -13,19 +13,13 @@ import uvicorn
 
 # Routers
 from rag_service.app.api import (
-    health,
-    auxiliar
+    health
 )
 from rag_service.app.api.backend import (
     retrieve,
     ingest
 )
 
-
-# from rag_service.app.api.backend import (
-#     health,
-#     auxiliar
-# )
 
 # Opentelemetry for Prometheus, Loki and Tempo
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -99,7 +93,6 @@ async def general_exception_handler(request, exc):
 
 # Include routers
 app.include_router(health.router)
-app.include_router(auxiliar.router)
 app.include_router(ingest.router)
 app.include_router(retrieve.router)
 
