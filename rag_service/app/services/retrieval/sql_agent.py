@@ -32,14 +32,13 @@ from shared.database.postgres import get_db
 from shared.schemas.role import RoleEnum, ROLE_HAS_SQL_ACCESS
 from rag_service.app.services.retrieval.sql_graph_state import SQLAgentState
 from shared.observability.langfuse_client import get_langfuse_handler
-from shared.observability.otel_utils import get_current_otel_trace_id
-from shared.observability.telemetry import traced_span
+from shared.observability.telemetry import get_current_otel_trace_id
 
 
 # ============================================================================
 # Exceptions
 # ============================================================================
-class RoleNotAuthorizedError(Exception):
+class RoleNotAuthorizedInSQLError(Exception):
     """Raised when a role has no access to the SQL retrieval tool."""
 
 
