@@ -2,7 +2,7 @@
 User management endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
-from shared.schemas.users import UserCreate, UserResponse
+from shared.schemas.user import UserCreate, UserResponse
 
 # Definition of the router
 router = APIRouter(

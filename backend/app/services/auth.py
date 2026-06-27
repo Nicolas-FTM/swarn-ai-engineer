@@ -3,8 +3,8 @@ from jose import jwt
 import bcrypt
 from typing import Optional
 from shared.config import settings
-from backend.app.models.user import User_Schema_DDBB
-from backend.app.database.session import get_user, get_user_username, db
+from shared.schemas.user import User_Schema_DDBB
+from backend.app.database.session import get_user, get_user_username
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 

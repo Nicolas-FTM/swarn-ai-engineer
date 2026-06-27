@@ -10,8 +10,6 @@ from datetime import timedelta
 
 # Authentication functions
 from backend.app.services.auth import (
-    authenticate_user,
-    decode_access_token,
     create_access_token,
     get_current_user,
     verify_password,
@@ -20,14 +18,13 @@ from backend.app.services.auth import (
 # DDBB Connection
 from backend.app.database.session import get_db, get_user_username
 # Use models
-from backend.app.models.user import User_Schema_DDBB
 from backend.app.models.auth import LoginRequest, TokenResponse
 
 # Environment variables
 from shared.config import settings
 
 # Models
-from shared.schemas.users import UserResponse
+from shared.schemas.user import UserResponse, User_Schema_DDBB
 
 # Logger
 import logging
