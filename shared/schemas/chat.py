@@ -1,6 +1,12 @@
-# Chat Schemas for no duplication between frontend and backend services
+"""
+Chat API Tables 
+"""
 
-from pydantic import BaseModel, Field
+# Pydantic
+from pydantic import BaseModel
+
+# Shared Imports
+from shared.schemas.role import RoleEnum
 
 class ChatMessage(BaseModel):
     """Chat message schema."""
@@ -12,14 +18,16 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     """Chat request schema."""
 
-    message: str
-    session_id: str = ""
+    role: RoleEnum
+    query: str
+    session_id: str # LangGraph Thread ID
 
 
 class ChatResponse(BaseModel):
     """Chat response schema."""
 
-    message: str
-    session_id: str
-    
+    answer: str
     sources: list = []
+    route_used: str  # "vector_rag" | "sql_agent" | "denied" | etc.
+    session_id: str # LangGraph Thread ID
+    

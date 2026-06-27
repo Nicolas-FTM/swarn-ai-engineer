@@ -9,8 +9,9 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # Pydantic
 from pydantic import BaseModel, EmailStr
-from enum import Enum as pyEnum
 
+# Imports
+from shared.schemas.role import RoleEnum
 
 Base = declarative_base()
 
@@ -33,13 +34,6 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-class RoleEnum(pyEnum):
-    baker = "baker"  # Bakers in the workshop
-    sales = "sales"  # Sales Department
-    hr = "hr"  # Human Resources
-    cofounder = "cofounder"  # Company Co-founder
-    admin = "admin"  # Admin role for system management
 
 class User_Schema_DDBB(Base):
     __tablename__ = "users"
