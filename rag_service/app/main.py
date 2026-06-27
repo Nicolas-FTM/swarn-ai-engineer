@@ -29,6 +29,7 @@ from shared.utils.metrics import init_metrics, get_metrics_app
 
 # Pre and Post Actions at the time of initializing the app
 from contextlib import asynccontextmanager
+from rag_service.scripts import seed_history
 
 # Logger setup
 from shared.utils.logging_config import setup_logging
@@ -38,11 +39,12 @@ import logging
 from shared.config import settings
 
 # Configure logging
-setup_logging(level=settings.log_level)
-logger = logging.getLogger("rag_service")
+service = "rag_service"
+setup_logging(service=service, level=settings.log_level)
+logger = logging.getLogger(service)
 
 # Measure traces
-trace_provider, resource = init_telemetry("rag_service")
+trace_provider, resource = init_telemetry(service)
 init_metrics(resource)
 
 @asynccontextmanager
@@ -51,6 +53,9 @@ async def lifespan(app: FastAPI):
     Lifespan context manager for startup and shutdown events.
     """
     logger.info("Application startup")
+
+    # Creation of dummy sales and reviews 
+    seed_history.main()
     yield
     logger.info("Application shutdown")
 

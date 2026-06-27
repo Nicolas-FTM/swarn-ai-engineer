@@ -7,7 +7,11 @@ import json
 from datetime import datetime, timezone
 from opentelemetry import trace
 
+
 class JSONFormatter(logging.Formatter):
+    def __init__(self, service: str):
+        super().__init__()
+        self.service = service
 
     def format(self, record: logging.LogRecord) -> str:
         span = trace.get_current_span()
@@ -16,7 +20,7 @@ class JSONFormatter(logging.Formatter):
         log_record = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
-            "service": "backend",
+            "service": self.service,
             "message": record.getMessage(),
             "logger": record.name,
             "module": record.module,
@@ -30,16 +34,23 @@ class JSONFormatter(logging.Formatter):
 
         if hasattr(record, "session_id"):
             log_record["session_id"] = record.session_id
+
         if record.exc_info:
             log_record["exception"] = self.formatException(record.exc_info)
+
         return json.dumps(log_record)
 
-def setup_logging(level: str = "INFO") -> None:
+
+def setup_logging(service: str, level: str = "INFO") -> logging.Logger:
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(JSONFormatter())
+    handler.setFormatter(JSONFormatter(service))
 
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
     root_logger.handlers = [handler]
 
-logger = logging.getLogger("backend")
+    return root_logger
+
+
+def get_logger(name: str) -> logging.Logger:
+    return logging.getLogger(name)

@@ -23,7 +23,7 @@ from backend.app.api.frontend import (
 from backend.app.api.rag_service import (
     documents
 )
-
+ 
 # Opentelemetry for Prometheus, Loki and Tempo
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from shared.utils.opentelemetry_init import init_telemetry
@@ -42,11 +42,12 @@ from shared.config import settings
 
 # Logger
 # Configure logging
-setup_logging(level=settings.log_level)
-logger = logging.getLogger("backend")
+service = "backend"
+setup_logging(service=service, level=settings.log_level)
+logger = logging.getLogger(service)
 
 # Measure traces
-trace_provider, resource = init_telemetry("backend")
+trace_provider, resource = init_telemetry(service)
 init_metrics(resource)
 
 @asynccontextmanager
