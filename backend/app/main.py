@@ -26,8 +26,8 @@ from backend.app.api.rag_service import (
  
 # Opentelemetry for Prometheus, Loki and Tempo
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from shared.utils.opentelemetry_init import init_telemetry
-from shared.utils.metrics import init_metrics, get_metrics_app
+from shared.observability.telemetry import init_telemetry
+from shared.observability.metrics import init_metrics, get_metrics_app
 
 # Pre and Post Actions at the time of initializing the app
 from contextlib import asynccontextmanager
@@ -77,7 +77,7 @@ app = FastAPI(
 
 # Mount /metrics BEFORE instrumenting, so it's excluded from traced/measured routes
 app.mount("/metrics", get_metrics_app())
-FastAPIInstrumentor().instrument_app(app)
+FastAPIInstrumentor().instrument_app(app, trace_provider=trace_provider)
 
 # Middleware
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])

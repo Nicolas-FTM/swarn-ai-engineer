@@ -29,6 +29,7 @@ from rag_service.app.services.ingestion.extractor import extract_documents
 from rag_service.app.services.ingestion.chunker import chunk_documents
 from rag_service.app.services.ingestion.embedder import embedding_model
 from rag_service.app.services.ingestion.qdrant_uploader import upsert_chunks
+from shared.observability.telemetry import traced_span
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,10 @@ EXCLUDED_RAW_FOLDERS = {"sales"}
 # ============================================================================
 # Helpers
 # ============================================================================
+@traced_span(name="embed_documents")
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    return embedding_model.embed_documents(texts)
+
 def restore_folder_to_raw(source_root: Path) -> None:
     """Move every file from a root folder's per-collection subfolders back to raw.
 
@@ -127,6 +132,7 @@ def restore_raw_state() -> None:
     clear_failed_logs()
 
 
+@traced_span()
 def run_ingestion() -> dict:
     """Run the full ingestion pipeline for all Qdrant collections.
 
@@ -165,7 +171,8 @@ def run_ingestion() -> dict:
 
                 # Compute embeddings for every chunk
                 texts = [chunk.page_content for chunk in chunks]
-                embeddings = embedding_model.embed_documents(texts)
+                # embeddings = embedding_model.embed_documents(texts)
+                embeddings = embed_texts(texts)
 
                 # Upsert chunks and their vectors into the target collection
                 upsert_chunks(collection_name, chunks, embeddings)

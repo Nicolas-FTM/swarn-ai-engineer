@@ -76,6 +76,6 @@ async def retrieve_all():
         metadata={"otel_trace_id": otel_trace_id},
     )
     
-    response = call_llm(prompt="Hola Chatgpt", otel_trace_id=otel_trace_id) 
+    response = call_llm(prompt="Hola LLM", otel_trace_id=otel_trace_id) 
     logger.info(response, extra={"otel_trace_id": otel_trace_id})
 

@@ -26,6 +26,7 @@ from langchain_core.documents import Document
 from shared.config.settings import settings
 from shared.schemas.role import ROLE_TO_QDRANT_COLLECTIONS
 from rag_service.app.services.ingestion.embedder import EMBEDDING_VECTOR_SIZE
+from shared.observability.telemetry import traced_span
 
 # ============================================================================
 # Constants
@@ -48,7 +49,7 @@ def ensure_collection(collection_name: str) -> None:
         )
 
 
-def _allowed_roles_for_collection(collection_name: str) -> list[str]:
+def allowed_roles_for_collection(collection_name: str) -> list[str]:
     """Resolve which roles are allowed to access a given collection.
 
     Args:
@@ -67,6 +68,7 @@ def _allowed_roles_for_collection(collection_name: str) -> list[str]:
 # ============================================================================
 # Services
 # ============================================================================
+@traced_span()
 def upsert_chunks(collection_name: str, chunks: list[Document], embeddings: list[list[float]]) -> None:
     """Upsert chunk embeddings into a Qdrant collection with role metadata.
 
@@ -76,7 +78,7 @@ def upsert_chunks(collection_name: str, chunks: list[Document], embeddings: list
         embeddings: List of embedding vectors, aligned with chunks.
     """
     ensure_collection(collection_name)
-    allowed_roles = _allowed_roles_for_collection(collection_name)
+    allowed_roles = allowed_roles_for_collection(collection_name)
 
     points = [
         PointStruct(

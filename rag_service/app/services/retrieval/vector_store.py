@@ -23,6 +23,7 @@ from shared.config.settings import settings
 from shared.schemas.role import RoleEnum, ROLE_TO_QDRANT_COLLECTIONS
 from shared.schemas.retrieval import RetrievedChunk
 from rag_service.app.services.ingestion.embedder import embedding_model
+from shared.observability.telemetry import traced_span
 
 # ============================================================================
 # Exceptions
@@ -38,6 +39,7 @@ client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
 # ============================================================================
 # Services
 # ============================================================================
+@traced_span()
 def retrieve_from_vector_store(role: RoleEnum, query: str, top_k: int = 5) -> list[RetrievedChunk]:
     """Retrieve relevant chunks from the collections allowed for a given role.
 

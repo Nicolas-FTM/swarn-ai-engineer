@@ -1,7 +1,7 @@
 """
 sql_agent.py
 
-Role-aware Text-to-SQL retrieval against Postgres.
+Role-aware Text-to-SQL retrieval against Postgres, orchestrated as a LangGraph.
 
 This module provides functions for:
 - Generating a SQL query from natural language via Ollama (Llama 3.1)
@@ -15,21 +15,31 @@ Example:
 # Packages
 # ============================================================================
 # SQLAlchemy
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 
 # LangChain Ollama
 from langchain_ollama import ChatOllama
+
+# LangGraph
+from langgraph.graph import StateGraph, START, END
+
+# Langfuse
+from langfuse.decorators import observe, langfuse_context
 
 # Project Imports
 from shared.config.settings import settings
 from shared.database.postgres import get_db
 from shared.schemas.role import RoleEnum, ROLE_HAS_SQL_ACCESS
-from shared.utils.postgres import get_db
+from rag_service.app.services.retrieval.sql_graph_state import SQLAgentState
+from shared.observability.langfuse_client import get_langfuse_handler
+from shared.observability.otel_utils import get_current_otel_trace_id
+from shared.observability.telemetry import traced_span
+
 
 # ============================================================================
 # Exceptions
 # ============================================================================
-class RoleNotAuthorizedInSQLError(Exception):
+class RoleNotAuthorizedError(Exception):
     """Raised when a role has no access to the SQL retrieval tool."""
 
 
@@ -39,24 +49,17 @@ class UnsafeQueryError(Exception):
 # ============================================================================
 # Constants
 # ============================================================================
-ALLOWED_TABLES = {"reviews", "sales"}
-
+ALLOWED_TABLES = {"reviews", "bakery_sales_data"}
 FORBIDDEN_KEYWORDS = {"insert", "update", "delete", "drop", "alter", "truncate", "grant"}
 
 SQL_GENERATION_PROMPT = """You are a PostgreSQL expert.
-
 Given the user question, write a single read-only SQL SELECT query.
 Only use these tables: reviews(date, rating, review_title, review_content),
-bakery_sales_data(date, order_id, item_name, item_price, quantity, transaction_type, time_of_sale, transaction_amount).
+sales(date, order_id, item_name, item_price, quantity, transaction_type, time_of_sale, transaction_amount).
 Return ONLY the SQL query, no explanation, no markdown formatting.
 
 Question: {question}
 SQL query:"""
-
-# engine = create_engine(
-#     f"postgresql+psycopg2://{settings.postgres_user}:{settings.postgres_password}"
-#     f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
-# )
 
 llm = ChatOllama(model="llama3.1", base_url=settings.ollama_base_url, temperature=0)
 
@@ -87,10 +90,96 @@ def validate_sql(sql: str) -> None:
         raise UnsafeQueryError("Query does not reference any allowed table")
     
 # ============================================================================
+# Graph Nodes
+# ============================================================================
+def generate_sql_node(state: SQLAgentState) -> SQLAgentState:
+    """Generate a SQL query from the natural language question.
+
+    Args:
+        state: Current graph state.
+
+    Returns:
+        Updated state with generated_sql populated.
+    """
+    prompt = SQL_GENERATION_PROMPT.format(question=state["question"])
+    response = llm.invoke(prompt)
+    sql = response.content.strip().strip("```sql").strip("```").strip()
+    return {**state, "generated_sql": sql}
+
+
+def validate_sql_node(state: SQLAgentState) -> SQLAgentState:
+    """Validate the generated SQL query against safety rules.
+
+    Args:
+        state: Current graph state.
+
+    Returns:
+        Updated state, with error populated if validation fails.
+    """
+    try:
+        validate_sql(state["generated_sql"])
+        return {**state, "error": None}
+    except UnsafeQueryError as e:
+        return {**state, "error": str(e)}
+
+
+def execute_sql_node(state: SQLAgentState) -> SQLAgentState:
+    """Execute the validated SQL query against Postgres.
+
+    Args:
+        state: Current graph state.
+
+    Returns:
+        Updated state with rows populated.
+    """
+    with get_db() as db:
+        result = db.execute(text(state["generated_sql"]))
+        rows = [dict(row._mapping) for row in result]
+    return {**state, "rows": rows}
+
+
+def _route_after_validation(state: SQLAgentState) -> str:
+    """Route to execution or end the graph, depending on validation result.
+
+    Args:
+        state: Current graph state.
+
+    Returns:
+        The name of the next node, or END if validation failed.
+    """
+    return END if state["error"] else "execute_sql"
+# ============================================================================
+# Graph Definition
+# ============================================================================
+def _build_sql_graph():
+    """Build and compile the SQL generation LangGraph.
+
+    Returns:
+        A compiled LangGraph ready to be invoked.
+    """
+
+    graph = StateGraph(SQLAgentState)
+
+    graph.add_node("generate_sql", generate_sql_node)
+    graph.add_node("validate_sql", validate_sql_node)
+    graph.add_node("execute_sql", execute_sql_node)
+
+    graph.add_edge(START, "generate_sql")
+    graph.add_edge("generate_sql", "validate_sql")
+    graph.add_conditional_edges("validate_sql", _route_after_validation)
+    graph.add_edge("execute_sql", END)
+
+    return graph.compile()
+
+
+sql_agent_graph = _build_sql_graph()
+
+# ============================================================================
 # Services
 # ============================================================================
+@observe(name="rag_service/sql_generation")
 def retrieve_from_sql(role: RoleEnum, query: str) -> tuple[list[dict], str]:
-    """Translate a natural language query into SQL and execute it.
+    """Translate a natural language query into SQL and execute it via LangGraph.
 
     Args:
         role: Role of the requesting user, resolved upstream by backend.
@@ -103,17 +192,30 @@ def retrieve_from_sql(role: RoleEnum, query: str) -> tuple[list[dict], str]:
         RoleNotAuthorizedError: If the role has no SQL retrieval access.
         UnsafeQueryError: If the generated SQL fails safety validation.
     """
+    otel_trace_id = get_current_otel_trace_id()
+    if otel_trace_id:
+        langfuse_context.update_current_trace(
+            metadata={"otel_trace_id": otel_trace_id, "role": role.value}
+        )
+
     if not ROLE_HAS_SQL_ACCESS.get(role, False):
-        raise RoleNotAuthorizedInSQLError(f"Role '{role.value}' has no SQL retrieval access")
+        raise RoleNotAuthorizedError(f"Role '{role.value}' has no SQL retrieval access")
 
-    prompt = SQL_GENERATION_PROMPT.format(question=query)
-    response = llm.invoke(prompt)
-    generated_sql = response.content.strip().strip("```sql").strip("```").strip()
+    handler = get_langfuse_handler()
+    initial_state: SQLAgentState = {
+        "question": query,
+        "role": role.value,
+        "generated_sql": "",
+        "rows": [],
+        "error": None,
+    }
 
-    validate_sql(generated_sql)
+    result = sql_agent_graph.invoke(
+        initial_state,
+        config={"callbacks": [handler]},
+    )
 
-    with get_db() as db:
-        result = db.execute(text(generated_sql))
-        rows = [dict(row._mapping) for row in result]
+    if result["error"]:
+        raise UnsafeQueryError(result["error"])
 
-    return rows, generated_sql
+    return result["rows"], result["generated_sql"]

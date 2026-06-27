@@ -26,6 +26,9 @@ from langchain_community.document_loaders import (
 )
 from langchain_core.documents import Document
 
+# Project Imports
+from shared.observability.telemetry import traced_span
+
 # ============================================================================
 # Constants
 # ============================================================================
