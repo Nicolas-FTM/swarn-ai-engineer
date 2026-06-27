@@ -7,7 +7,7 @@ This script creates:
 """
 
 # DDBB interaction
-from rag_service.app.database.session import add_sale, add_review
+from shared.utils.postgres import create
 
 # Data Schema
 from shared.schemas.sale import SaleRecord, Sale_Schema_DDBB
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def create_sales() -> None:
     """Create initial sales for the application."""
-    df = pd.read_csv("rag_service/data/raw/bakery_sales_data.csv")
+    df = pd.read_csv("rag_service/data/raw/sales/bakery_sales_data.csv")
     # NaN -> None with the ide of Pydantic doesnt fail with aditional fields
     df = df.where(pd.notnull(df), None)
     df = df.replace({"NA": None, "N/A": None, "nan": None, "None": None})
@@ -44,14 +44,23 @@ def create_sales() -> None:
             transaction_amount=r.transaction_amount
         )
  
-        add_sale(sale_record)
+        flag = create(model=Sale_Schema_DDBB,
+               instance=sale_record,
+               unique_filters={
+                   "order_id": sale_record.order_id
+               }
+        )
+        
+        if not flag:
+            # logger.info(f"Record {i} not inserted: {sale_record.date}")
+            pass
 
     logging.info("All sales inserted")
 
 
 def create_reviews() -> None: 
     """Create initial reviews for the application."""
-    df = pd.read_csv("rag_service/data/raw/bakery_reviews_data.csv")
+    df = pd.read_csv("rag_service/data/raw/sales/bakery_reviews_data.csv")
     # NaN -> None with the ide of Pydantic doesnt fail with aditional fields
     df = df.where(pd.notnull(df), None)
     df = df.replace({"NA": None, "N/A": None, "nan": None, "None": None})
@@ -70,7 +79,15 @@ def create_reviews() -> None:
             review_content=r.review_content 
         ) 
 
-        flag = add_review(review_record)
+        flag = create(model=Review_Schema_DDBB,
+            instance=review_record,
+            unique_filters={
+                "date": review_record.date,
+                "rating": review_record.rating,
+                "review_title": review_record.review_title,
+                "review_content": review_record.review_content
+            }
+        )
 
         if not flag:
             # logger.info(f"Record {i} not inserted: {review_record.date}")

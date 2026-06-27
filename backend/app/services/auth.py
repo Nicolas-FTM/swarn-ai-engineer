@@ -4,7 +4,7 @@ import bcrypt
 from typing import Optional
 from shared.config import settings
 from shared.schemas.user import User_Schema_DDBB
-from backend.app.database.session import get_user, get_user_username
+from shared.utils.postgres import get
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 
@@ -65,11 +65,17 @@ def decode_access_token(token: str) -> dict:
 #####################
 def authenticate_user(username: str, password: str) -> Optional[User_Schema_DDBB]:
     """Authenticate a user by username and password."""
-    user = get_user_username(username)
+    user = get(
+        model=User_Schema_DDBB,
+        filters={"username": username}
+        )
+    
     if not user:
         return None
+    
     if not verify_password(password, user.hashed_password):
         return None
+    
     return user
 
 ##############################
@@ -90,9 +96,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User_Schema_DDBB:
    
     if id is None:
         raise credentials_exception
-
-    user = get_user(id)
-        
+    
+    user = get(
+        model=User_Schema_DDBB,
+        filters={"id": id}
+        )
+    
     if user is None:
         raise credentials_exception
     

@@ -8,7 +8,7 @@ This script creates: 1. One admin user (cofounder role) with full access
 """
 
 # DDBB interaction
-from backend.app.database.session import add_user
+from shared.utils.postgres import create
 
 # Data Schema
 from shared.schemas.user import User_Schema_DDBB
@@ -63,7 +63,7 @@ def create_users() -> None:
     ]
 
     for user_data in users_data:
-        user = User_Schema_DDBB(
+        user_record = User_Schema_DDBB(
             username = user_data["username"],
             email = user_data["email"],
             hashed_password = get_password_hash(user_data["password"]),
@@ -71,7 +71,16 @@ def create_users() -> None:
             role = user_data["role"]
         ) 
 
-        add_user(user) 
+        flag = create(model=User_Schema_DDBB,
+            instance=user_record,
+            unique_filters={
+                "username": user_record.username
+            }
+        )
+
+        if not flag:
+            # logger.info(f"Record {i} not inserted: {user.date}")
+            pass
 
 def main() -> None:
     """Main function to execute the seeding."""

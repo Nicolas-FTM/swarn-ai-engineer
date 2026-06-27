@@ -15,7 +15,10 @@ from shared.config import settings
 from backend.app.agents.runner import call_llm
 
 # DDBB Calls
-from backend.app.database.session import list_users
+from shared.utils.postgres import get
+
+# Data Schemas
+from shared.schemas.user import User_Schema_DDBB
 
 # Traces
 from opentelemetry import trace
@@ -39,7 +42,10 @@ async def auxiliar_fun():
     otel_trace_id = format(span.get_span_context().trace_id, "032x")
 
     logger.info("Fetching users...", extra={"otel_trace_id": otel_trace_id})
-    users = list_users()
+    users = get(
+        model = User_Schema_DDBB,
+        first=False        
+    )
     logger.info(users, extra={"otel_trace_id": otel_trace_id})
 
     return users

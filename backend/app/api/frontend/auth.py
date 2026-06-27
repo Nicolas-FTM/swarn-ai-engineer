@@ -1,24 +1,19 @@
 # FastAPI imports
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-
-# SQL Alchemy
-from sqlalchemy.orm import Session
-
-# Datetime
-from datetime import timedelta
+from fastapi import APIRouter, Depends, HTTPException
 
 # Authentication functions
 from backend.app.services.auth import (
     create_access_token,
     get_current_user,
-    verify_password,
-    oauth2_scheme
+    verify_password
 )
+
 # DDBB Connection
-from backend.app.database.session import get_db, get_user_username
+from shared.utils.postgres import get
+
 # Use models
 from backend.app.models.auth import LoginRequest, TokenResponse
+from shared.schemas.user import User_Schema_DDBB
 
 # Environment variables
 from shared.config import settings
@@ -39,7 +34,10 @@ router = APIRouter(
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest):
     """Login for the Frontend"""
-    user = get_user_username(username = payload.username)
+    user = get(
+        model=User_Schema_DDBB,
+        filters={"username": payload.username}
+        )
 
     if (not user) or (not verify_password(payload.password, user.hashed_password)):
         raise HTTPException(status_code=401, detail="Incorrect Username or Password")
