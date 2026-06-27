@@ -12,7 +12,6 @@ import uvicorn
 
 # Routers
 from backend.app.api import (
-    auxiliar,
     health
 )
 from backend.app.api.frontend import (
@@ -105,7 +104,6 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(chat.router)
 app.include_router(documents.router)
-app.include_router(auxiliar.router)
 
 if __name__ == "__main__":
     uvicorn.run(
