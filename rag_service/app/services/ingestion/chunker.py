@@ -18,11 +18,13 @@ Example:
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
+# Project Imports
+from shared.config.loader import load_agents
+
 # ============================================================================
 # Constants
 # ============================================================================
-CHUNK_SIZE = 800
-CHUNK_OVERLAP = 120
+chunker_config = load_agents().get("chunker", None)
 
 # Separators ordered to respect headers and paragraphs before raw splitting
 CHUNK_SEPARATORS = ["\n## ", "\n# ", "\n\n", "\n", ". ", " "]
@@ -31,8 +33,8 @@ CHUNK_SEPARATORS = ["\n## ", "\n# ", "\n\n", "\n", ". ", " "]
 # Services
 # ============================================================================
 splitter = RecursiveCharacterTextSplitter(
-    chunk_size=CHUNK_SIZE,
-    chunk_overlap=CHUNK_OVERLAP,
+    chunk_size=chunker_config.get("size", None),
+    chunk_overlap=chunker_config.get("overlap", None),
     separators=CHUNK_SEPARATORS,
 )
 

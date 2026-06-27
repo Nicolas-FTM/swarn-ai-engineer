@@ -18,18 +18,20 @@ Example:
 from langchain_ollama import OllamaEmbeddings
 
 # Project Imports
+from shared.config.loader import load_agents
 from shared.config.settings import settings
 
-# ============================================================================
-# Constants
-# ============================================================================
-EMBEDDING_MODEL_NAME = "mxbai-embed-large"
-EMBEDDING_VECTOR_SIZE = 1024
+agent_config = load_agents().get("llm_embedding", None)
 
 # ============================================================================
 # Services
 # ============================================================================
-embedding_model = OllamaEmbeddings(
-    model=EMBEDDING_MODEL_NAME,
-    base_url=settings.ollama_base_url,
-)
+
+embedding_model = None
+
+if agent_config.get("provider", None) == "ollama":
+    embedding_model = OllamaEmbeddings(
+        model=agent_config.get("model", None),
+        base_url=settings.ollama_base_url,
+    )
+

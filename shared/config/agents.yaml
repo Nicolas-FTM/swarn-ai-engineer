@@ -26,6 +26,11 @@ retrieval:
   sql:
     timeout_seconds: 30
 
+chunker:
+  size: 800
+  overlap: 120
+
+
 intent_router:
   # Prompt used by the LLM node that classifies the user's question
   prompt: |
