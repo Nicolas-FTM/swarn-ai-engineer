@@ -4,6 +4,7 @@ import bcrypt
 from typing import Optional
 from shared.config.settings import settings
 from shared.schemas.user import User_Schema_DDBB
+from shared.schemas.role import RoleEnum
 from shared.database.postgres import get
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -105,4 +106,24 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> User_Schema_DDBB:
     if user is None:
         raise credentials_exception
     
+    return user
+
+##############################
+# Admin check
+##############################
+def require_admin(user: User_Schema_DDBB = Depends(get_current_user)) -> User_Schema_DDBB:
+    """Guard an endpoint so only users with the admin role can access it.
+
+    Args:
+        user: The current user, resolved upstream from the JWT.
+
+    Returns:
+        The same user object, if authorized, so the endpoint can reuse it.
+
+    Raises:
+        HTTPException: 403 if the user's role is not admin.
+    """
+    if user.role != RoleEnum.admin:
+        raise HTTPException(status_code=403, detail="Admin role required")
+
     return user

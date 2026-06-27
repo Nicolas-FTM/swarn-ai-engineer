@@ -1,52 +1,85 @@
 """
-RAG Service: Orchestrates document retrieval and LLM interaction.
+rag_service.py
+
+HTTP client wrappers around rag_service retrieval endpoints.
+
+This module provides functions for:
+- Calling /retrieve/vector and /retrieve/sql on rag_service
+
+Example:
+    chunks, sources = retrieve_vector(role="baker", query="bread recipe")
 """
-import logging
+# ============================================================================
+# Packages
+# ============================================================================
+# HTTP Client
 import httpx
-from shared.schemas.chat import ChatRequest, ChatResponse
+
+# Project Imports
 from shared.config.settings import settings
+from shared.config.loader import load_agents
 
-logger = logging.getLogger(__name__)
+retrieval_vector_conf = load_agents().get("retrieval", None)
 
-class RAGService:
-    """Service for RAG operations."""
+# ============================================================================
+# Exceptions
+# ============================================================================
+class RetrievalError(Exception):
+    """Raised when a call to rag_service fails or is rejected."""
 
-    def __init__(self):
-        """Initialize RAG service."""
-        # TODO: Initialize Qdrant client, Ollama client, LangGraph graph
-        pass
+# ============================================================================
+# Services
+# ============================================================================
+def retrieve_vector(role: str, query: str, top_k: int = retrieval_vector_conf.get("top_k")) -> tuple[list[str], list[str]]:
+    """Call rag_service's /retrieve/vector endpoint.
 
-    async def call_rag_service(message: str) -> ChatResponse:
+    Args:
+        role: Role of the requesting user, resolved upstream from JWT.
+        query: Natural language query to search for.
+        top_k: Maximum number of chunks to retrieve.
 
-        async with httpx.AsyncClient() as client:
-            prefix="/api/generate"
-            endpoint = f"{settings.rag_service_url}{prefix}" 
-            logger.info(endpoint)
-            resp = await client.post(
-                endpoint,
-                json=ChatRequest(message=message).model_dump(),
-                timeout=30.0,
-            )
-            resp.raise_for_status()
-            return ChatResponse(**resp.json())
+    Returns:
+        A tuple of (list of chunk texts, list of source identifiers).
 
-    async def retrieve_documents(self, query: str, top_k: int = 5):
-        """
-        Retrieve relevant documents from vector store.
-        """
-        # TODO: Implement retrieval from Qdrant
-        pass
+    Raises:
+        RetrievalError: If rag_service rejects or fails the request.
+    """
+    response = httpx.post(
+        f"{settings.rag_service_url}/retrieve/vector",
+        json={"role": role, "query": query, "top_k": top_k},
+        timeout=30.0,
+    )
 
-    async def generate_response(self, query: str, context: str):
-        """
-        Generate response using LLM with retrieved context.
-        """
-        # TODO: Implement LLM call via Ollama + LangGraph
-        pass
+    if response.status_code != 200:
+        raise RetrievalError(f"Vector retrieval failed: {response.text}")
 
-    async def ingest_document(self, filepath: str):
-        """
-        Ingest document: chunk, embed, store in Qdrant.
-        """
-        # TODO: Implement document ingestion pipeline
-        pass
+    payload = response.json()
+    texts = [chunk["text"] for chunk in payload["chunks"]]
+    sources = [chunk["source"] for chunk in payload["chunks"]]
+    return texts, sources
+
+
+def retrieve_sql(role: str, query: str) -> tuple[list[dict], str]:
+    """Call rag_service's /retrieve/sql endpoint.
+
+    Args:
+        role: Role of the requesting user, resolved upstream from JWT.
+        query: Natural language question about tabular data.
+
+    Returns:
+        A tuple of (result rows, generated SQL string).
+
+    Raises:
+        RetrievalError: If rag_service rejects or fails the request.
+    """
+    response = httpx.post(
+        f"{settings.rag_service_url}/retrieve/sql",
+        json={"role": role, "query": query},
+        timeout=30.0,
+    )
+
+    if response.status_code != 200:
+        raise RetrievalError(f"SQL retrieval failed: {response.text}")
+
+    payload = response.json()
+    return payload["rows"], payload["generated_sql"]
