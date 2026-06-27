@@ -51,13 +51,13 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 60)
 
     # Qdrant
-    qdrant_host: str = os.getenv("QDRANT_HOST", "localhost")
+    qdrant_host: str = os.getenv("QDRANT_HOST", "qdrant")
     qdrant_port: int = os.getenv("QDRANT_PORT", 6333)
     qdrant_url: str = f"http://{qdrant_host}:{qdrant_port}"
     qdrant_api_key: str = os.getenv("QDRANT_API_KEY", "your-api-key-change-this-in-production")
 
     # Ollama
-    ollama_host: str = os.getenv("OLLAMA_HOST", "localhost")
+    ollama_host: str = os.getenv("OLLAMA_HOST", "ollama")
     ollama_port: int = os.getenv("OLLAMA_PORT", 11434)
     ollama_base_url: str = f"http://{ollama_host}:{ollama_port}"
     ollama_model: str = os.getenv("OLLAMA_MODEL", "mistral")
