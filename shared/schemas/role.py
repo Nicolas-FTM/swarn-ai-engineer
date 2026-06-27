@@ -14,7 +14,7 @@ class RoleEnum(pyEnum):
 # Actual source: role -> permitted Qdrant collections
 ROLE_TO_QDRANT_COLLECTIONS: dict[RoleEnum, list[str]] = {
     RoleEnum.baker: ["recipes_procedures"],
-    RoleEnum.hr: ["confidential"],
+    RoleEnum.hr: ["general_and_confidential"],
     RoleEnum.cofounder: ["cofounder_doc"],
     RoleEnum.sales: [],  # Sales dont have access to Qdrant, just to PostGres
     RoleEnum.admin: ["recipes_procedures", "confidential", "cofounder_doc"],

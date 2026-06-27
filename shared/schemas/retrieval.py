@@ -1,13 +1,55 @@
-# Retrieval Schemas for no duplication between agents (backend) and RAG service
+"""
+retrieval.py
 
-from pydantic import BaseModel, Field
+Pydantic request/response models for the rag_service API.
 
-class RetrievalRequest(BaseModel):
+This module provides:
+- Vector retrieval request/response models
+- SQL retrieval request/response models
+
+Example:
+    request = RetrieveVectorRequest(role=RoleEnum.baker, query="how to make bread")
+"""
+
+# ============================================================================
+# Packages
+# ============================================================================
+# Pydantic
+from pydantic import BaseModel
+
+# Project Imports
+from shared.schemas.role import RoleEnum
+
+# ============================================================================
+# Data Models
+# ============================================================================
+class RetrieveVectorRequest(BaseModel):
+    """Request payload for vector-based document retrieval."""
+    role: RoleEnum
     query: str
-    session_id: str
-    user_id: str | None = None
+    top_k: int = 5
 
-class RetrievalResponse(BaseModel):
-    answer: str
-    sources: list[str] = []
-    session_id: str
+
+class RetrievedChunk(BaseModel):
+    """A single retrieved chunk with its source metadata."""
+    text: str
+    source: str
+    chunk_id: str
+    score: float
+
+
+class RetrieveVectorResponse(BaseModel):
+    """Response payload for vector-based document retrieval."""
+    chunks: list[RetrievedChunk]
+
+
+class RetrieveSQLRequest(BaseModel):
+    """Request payload for SQL-based tabular retrieval."""
+    role: RoleEnum
+    query: str
+
+
+class RetrieveSQLResponse(BaseModel):
+    """Response payload for SQL-based tabular retrieval."""
+    rows: list[dict]
+    generated_sql: str

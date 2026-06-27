@@ -16,6 +16,11 @@ from rag_service.app.api import (
     health,
     auxiliar
 )
+from rag_service.app.api.backend import (
+    retrieve,
+    ingest
+)
+
 
 # from rag_service.app.api.backend import (
 #     health,
@@ -95,6 +100,8 @@ async def general_exception_handler(request, exc):
 # Include routers
 app.include_router(health.router)
 app.include_router(auxiliar.router)
+app.include_router(ingest.router)
+app.include_router(retrieve.router)
 
 if __name__ == "__main__":
     uvicorn.run(
