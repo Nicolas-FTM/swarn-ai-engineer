@@ -105,18 +105,7 @@ E.g:
 
 - Langfuse API Key: you create your account in Langfuse, create organization + members + project, and you obtain secret key and public key. Put that values in the fields on .env
 
-
-<b> 6.- Download the ollama model </b> 
-
-Definition: Download process of ollama ai model for the app. In this case, the used model llama3.1
-
-```bash
-docker exec -it swarn-ollama bash
-ollama pull llama3.1
-ollama list
-```
-
-<b> 7.- Set the PGAdmin UI for PostgreSQL </b> 
+<b> 6.- Set the PGAdmin UI for PostgreSQL </b> 
 
 Definition: Creation of the server to visualize the PostGreSQL data 
 
@@ -132,7 +121,7 @@ Steps:
   <li>Password: defined in .env (in .example.env: password)</li>
 </ol>
 
-<b> 8.- Reset your main services (frontend, backend and rag_service) </b> 
+<b> 7.- Reset your main services (frontend, backend and rag_service) </b> 
 
 Definition: Once you have been set the environment variables, you are going to make the steps 2 and 3 just for backend, frontend and rag_service. Keep in mind this step is to copy the new .env file to each container
 

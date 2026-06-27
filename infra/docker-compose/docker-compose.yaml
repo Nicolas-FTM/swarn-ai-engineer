@@ -84,7 +84,7 @@ services:
       - "11434:11434" # Ollama API port: host:container
     volumes:
       - ollama_data:/root/.ollama # Persistent storage for downloaded models
-    entrypoint: sh -c "ollama serve & sleep 5 && ollama pull llama3.1 && wait"
+    entrypoint: sh -c "ollama serve & sleep 5 && ollama pull llama3.1 && ollama pull mxbai-embed-large && wait"
     environment: # Environment variables for Ollama configuration
       OLLAMA_HOST: 0.0.0.0:11434 # Bind address and port
     networks:
