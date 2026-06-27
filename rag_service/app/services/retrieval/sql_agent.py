@@ -28,11 +28,19 @@ from langfuse.decorators import observe, langfuse_context
 
 # Project Imports
 from shared.config.settings import settings
+from shared.config.loader import load_agents
 from shared.database.postgres import get_db
 from shared.schemas.role import RoleEnum, ROLE_HAS_SQL_ACCESS
 from rag_service.app.services.retrieval.sql_graph_state import SQLAgentState
 from shared.observability.langfuse_client import get_langfuse_handler
 from shared.observability.telemetry import get_current_otel_trace_id
+
+agent_config = load_agents().get("sql_agent", None)
+
+llm = None
+
+if agent_config.get("provider", None) == "ollama":
+    llm = ChatOllama(model=agent_config.get("model", None), base_url=settings.ollama_base_url, temperature=agent_config.get("temperature"))
 
 
 # ============================================================================
@@ -51,16 +59,7 @@ class UnsafeQueryError(Exception):
 ALLOWED_TABLES = {"reviews", "bakery_sales_data"}
 FORBIDDEN_KEYWORDS = {"insert", "update", "delete", "drop", "alter", "truncate", "grant"}
 
-SQL_GENERATION_PROMPT = """You are a PostgreSQL expert.
-Given the user question, write a single read-only SQL SELECT query.
-Only use these tables: reviews(date, rating, review_title, review_content),
-sales(date, order_id, item_name, item_price, quantity, transaction_type, time_of_sale, transaction_amount).
-Return ONLY the SQL query, no explanation, no markdown formatting.
-
-Question: {question}
-SQL query:"""
-
-llm = ChatOllama(model="llama3.1", base_url=settings.ollama_base_url, temperature=0)
+SQL_GENERATION_PROMPT = load_agents().get("sql_generation_prompt", None).get("prompt", None)
 
 # ============================================================================
 # Helpers

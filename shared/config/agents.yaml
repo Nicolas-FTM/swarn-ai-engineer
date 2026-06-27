@@ -1,0 +1,64 @@
+# ============================================================================
+# Agent and retrieval configuration
+# Centralizes values that would otherwise be hardcoded across nodes/tools,
+# so they can be tuned without touching code.
+# ============================================================================
+
+main_agent:
+  provider: "ollama"
+  model: "llama3.1"
+  temperature: 0.2
+
+llm_embedding:
+  provider: "ollama"
+  model: "mxbai-embed-large"
+  embedding_vector_size: 1024
+
+sql_agent:
+  provider: "ollama"
+  model: "llama3.1"
+  temperature: 0.2
+
+retrieval:
+  vector:
+    top_k: 5
+    timeout_seconds: 30
+  sql:
+    timeout_seconds: 30
+
+intent_router:
+  # Prompt used by the LLM node that classifies the user's question
+  prompt: |
+    You are a routing assistant. Classify the user's question into exactly
+    one category: "vector" (questions about recipes, procedures, confidential
+    documents, or company-specific knowledge) or "sql" (questions about sales
+    figures, totals, reviews, or any numerical/tabular data).
+    Respond with only one word: vector or sql.
+
+    Question: {question}
+    Category:
+
+generation:
+  # Prompt used by the final answer-generation node
+  prompt: |
+    You are a helpful internal assistant. Answer the user's question using
+    ONLY the provided context. If the context is empty or insufficient,
+    say you don't have enough information to answer.
+
+    Context:
+    {context}
+
+    Question: {question}
+    Answer:
+
+
+sql_generation_prompt:
+  prompt: |
+    You are a PostgreSQL expert.
+    Given the user question, write a single read-only SQL SELECT query.
+    Only use these tables: reviews(date, rating, review_title, review_content),
+    sales(date, order_id, item_name, item_price, quantity, transaction_type, time_of_sale, transaction_amount).
+    Return ONLY the SQL query, no explanation, no markdown formatting.
+
+    Question: {question}
+    SQL query:

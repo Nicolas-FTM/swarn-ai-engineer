@@ -19,6 +19,9 @@ from pydantic import BaseModel
 
 # Project Imports
 from shared.schemas.role import RoleEnum
+from shared.config.loader import load_agents
+
+retrieval_vector_conf = load_agents().get("retrieval", None).get("vector", None)
 
 # ============================================================================
 # Data Models
@@ -27,7 +30,7 @@ class RetrieveVectorRequest(BaseModel):
     """Request payload for vector-based document retrieval."""
     role: RoleEnum
     query: str
-    top_k: int = 5
+    top_k: int = retrieval_vector_conf["top_k"]
 
 
 class RetrievedChunk(BaseModel):

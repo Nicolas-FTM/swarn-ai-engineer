@@ -3,14 +3,20 @@ LangGraph agent graph definition.
 """
 from langgraph.graph import StateGraph, START, END
 from shared.schemas.agent import AgentState
+from shared.config.settings import settings
+from shared.config.loader import load_agents
 from langchain_ollama import ChatOllama
-from typing import TypedDict
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-llm = ChatOllama(model="llama3.1", temperature=0.3)
+agent_config = load_agents().get("main_agent", None)
+
+llm = None
+
+if agent_config.get("provider", None) == "ollama":
+    llm = ChatOllama(model=agent_config.get("model", None), base_url=settings.ollama_base_url, temperature=agent_config.get("temperature"))
 
 async def retrieve_and_generate_node(state: AgentState) -> AgentState:
     """Nodo que llama al rag_service."""
