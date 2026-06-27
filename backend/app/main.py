@@ -20,7 +20,7 @@ from backend.app.api.frontend import (
     users
 )
 from backend.app.api.rag_service import (
-    documents
+    ingest
 )
  
 # Opentelemetry for Prometheus, Loki and Tempo
@@ -103,7 +103,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(chat.router)
-app.include_router(documents.router)
+app.include_router(ingest.router)
 
 if __name__ == "__main__":
     uvicorn.run(

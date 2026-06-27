@@ -24,13 +24,14 @@ from langchain_core.documents import Document
 
 # Project Imports
 from shared.config.settings import settings
+from shared.config.loader import load_agents
 from shared.schemas.role import ROLE_TO_QDRANT_COLLECTIONS
-from rag_service.app.services.ingestion.embedder import EMBEDDING_VECTOR_SIZE
 from shared.observability.telemetry import traced_span
 
 # ============================================================================
 # Constants
 # ============================================================================
+EMBEDDING_VECTOR_SIZE = load_agents().get("llm_embedding", None).get("embedding_vector_size", None)
 client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
 
 # ============================================================================

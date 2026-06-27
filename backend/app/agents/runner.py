@@ -19,7 +19,7 @@ from langfuse.decorators import observe, langfuse_context
 from backend.app.agents.graph import chat_graph
 from shared.schemas.chat import ChatState
 from shared.observability.langfuse_client import get_langfuse_handler
-from shared.observability.otel_utils import get_current_otel_trace_id
+from shared.observability.telemetry import get_current_otel_trace_id
 
 # ============================================================================
 # Services
