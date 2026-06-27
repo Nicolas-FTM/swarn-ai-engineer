@@ -16,6 +16,9 @@ dependencies = [
     "sqlalchemy==2.0.23",
     "alembic==1.12.1",
 
+    # Pandas
+    "pandas>=3.0.3,<4",
+
     # Auth
     "fastapi-users[sqlalchemy]==12.1.2",
     "python-jose[cryptography]==3.3.0",
