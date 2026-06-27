@@ -74,7 +74,7 @@ app = FastAPI(
 
 # Mount /metrics BEFORE instrumenting, so it's excluded from traced/measured routes
 app.mount("/metrics", get_metrics_app())
-FastAPIInstrumentor().instrument_app(app, trace_provider=trace_provider)
+FastAPIInstrumentor().instrument_app(app)
 
 # Middleware
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
