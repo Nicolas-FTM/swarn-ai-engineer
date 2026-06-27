@@ -17,6 +17,8 @@ Example:
 # FastAPI
 from fastapi import APIRouter, HTTPException
 
+from langfuse.decorators import observe
+
 # Project Imports
 from shared.schemas.retrieval import (
     RetrieveVectorRequest,
@@ -56,6 +58,7 @@ async def retrieve_vector(request: RetrieveVectorRequest) -> RetrieveVectorRespo
     return RetrieveVectorResponse(chunks=chunks)
 
 @router.post("/sql", response_model=RetrieveSQLResponse)
+@observe(name="rag_service/retrieve_sql_endpoint")
 async def retrieve_sql(request: RetrieveSQLRequest) -> RetrieveSQLResponse:
     """Retrieve tabular data for a given role and natural language query."""
     try:
