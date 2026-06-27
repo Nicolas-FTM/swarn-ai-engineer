@@ -77,8 +77,9 @@ docs/*
 
 # Sensitive files
 rag_service/data/processed/*
+rag_service/data/failed/*
 rag_service/data/raw/*
-rag_service/data/seeds/*
 !rag_service/data/processed/.gitkeep
 !rag_service/data/raw/.gitkeep
-!rag_service/data/seeds/.gitkeep
+!rag_service/data/failed/.gitkeep
+
