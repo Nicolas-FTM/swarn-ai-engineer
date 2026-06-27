@@ -9,7 +9,7 @@ from shared.utils.llm_tracing import langfuse_client
 from langfuse.decorators import observe
 
 # Environment Variables
-from shared.config import settings
+from shared.config.settings import settings
 
 # Call LLM 
 from rag_service.app.agents.runner import call_llm

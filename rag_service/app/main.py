@@ -37,11 +37,11 @@ from contextlib import asynccontextmanager
 from rag_service.scripts import seed_history
 
 # Logger setup
-from shared.utils.logging_config import setup_logging
+from shared.observability.logging_config import setup_logging
 import logging
 
 # Environment Variables
-from shared.config import settings
+from shared.config.settings import settings
 
 # Configure logging
 service = "rag_service"

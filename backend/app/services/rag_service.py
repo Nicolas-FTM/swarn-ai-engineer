@@ -4,7 +4,7 @@ RAG Service: Orchestrates document retrieval and LLM interaction.
 import logging
 import httpx
 from shared.schemas.chat import ChatRequest, ChatResponse
-from shared.config import settings
+from shared.config.settings import settings
 
 logger = logging.getLogger(__name__)
 

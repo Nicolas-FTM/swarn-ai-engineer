@@ -93,6 +93,7 @@ class Settings(BaseSettings):
 
     # Langfuse (OPTelemetry)
     otel_exporter_otlp_endpoint : str = f"{tempo_host}:{tempo_port}" # Tempo OTLP gRPC endpoint
+    otel_exporter_otlp_insecure: bool = os.getenv("OTEL_EXPORTER_OTLP_INSECURE", "True").lower() == "true"
 
     # CORS
     cors_origins: str = os.getenv("CORS_ORIGINS", "NA")

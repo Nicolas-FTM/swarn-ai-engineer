@@ -18,7 +18,7 @@ Example:
 from langchain_ollama import OllamaEmbeddings
 
 # Project Imports
-from shared.config import settings
+from shared.config.settings import settings
 
 # ============================================================================
 # Constants

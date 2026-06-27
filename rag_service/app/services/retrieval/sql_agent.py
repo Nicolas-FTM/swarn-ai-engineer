@@ -21,7 +21,8 @@ from sqlalchemy import text
 from langchain_ollama import ChatOllama
 
 # Project Imports
-from shared.config import settings
+from shared.config.settings import settings
+from shared.database.postgres import get_db
 from shared.schemas.role import RoleEnum, ROLE_HAS_SQL_ACCESS
 from shared.utils.postgres import get_db
 

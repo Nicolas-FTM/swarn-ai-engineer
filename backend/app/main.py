@@ -34,11 +34,11 @@ from contextlib import asynccontextmanager
 from backend.scripts import seed_users
 
 # Logger setup
-from shared.utils.logging_config import setup_logging
+from shared.observability.logging_config import setup_logging
 import logging
 
 # Environment Variables
-from shared.config import settings
+from shared.config.settings import settings
 
 # Logger
 # Configure logging

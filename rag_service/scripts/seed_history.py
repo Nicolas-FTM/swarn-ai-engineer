@@ -7,7 +7,7 @@ This script creates:
 """
 
 # DDBB interaction
-from shared.utils.postgres import create
+from shared.database.postgres import create
 
 # Data Schema
 from shared.schemas.sale import SaleRecord, Sale_Schema_DDBB

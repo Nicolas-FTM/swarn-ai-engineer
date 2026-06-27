@@ -9,14 +9,14 @@ from backend.app.services.auth import (
 )
 
 # DDBB Connection
-from shared.utils.postgres import get
+from shared.database.postgres import get
 
 # Use models
 from backend.app.models.auth import LoginRequest, TokenResponse
 from shared.schemas.user import User_Schema_DDBB
 
 # Environment variables
-from shared.config import settings
+from shared.config.settings import settings
 
 # Models
 from shared.schemas.user import UserResponse, User_Schema_DDBB

@@ -8,7 +8,7 @@ This script creates: 1. One admin user (cofounder role) with full access
 """
 
 # DDBB interaction
-from shared.utils.postgres import create
+from shared.database.postgres import create
 
 # Data Schema
 from shared.schemas.user import User_Schema_DDBB

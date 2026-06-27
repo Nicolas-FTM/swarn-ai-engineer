@@ -23,7 +23,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 # Project Imports
-from shared.config import settings
+from shared.config.settings import settings
 
 # Logger
 import logging

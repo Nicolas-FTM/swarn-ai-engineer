@@ -19,7 +19,7 @@ Example:
 from qdrant_client import QdrantClient
 
 # Project Imports
-from shared.config import settings
+from shared.config.settings import settings
 from shared.schemas.role import RoleEnum, ROLE_TO_QDRANT_COLLECTIONS
 from shared.schemas.retrieval import RetrievedChunk
 from rag_service.app.services.ingestion.embedder import embedding_model

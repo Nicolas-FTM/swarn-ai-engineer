@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 from jose import jwt
 import bcrypt
 from typing import Optional
-from shared.config import settings
+from shared.config.settings import settings
 from shared.schemas.user import User_Schema_DDBB
-from shared.utils.postgres import get
+from shared.database.postgres import get
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 

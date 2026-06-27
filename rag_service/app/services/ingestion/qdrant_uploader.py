@@ -23,7 +23,7 @@ from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from langchain_core.documents import Document
 
 # Project Imports
-from shared.config import settings
+from shared.config.settings import settings
 from shared.schemas.role import ROLE_TO_QDRANT_COLLECTIONS
 from rag_service.app.services.ingestion.embedder import EMBEDDING_VECTOR_SIZE
 
