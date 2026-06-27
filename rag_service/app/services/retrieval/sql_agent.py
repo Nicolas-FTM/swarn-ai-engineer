@@ -197,7 +197,7 @@ def retrieve_from_sql(role: RoleEnum, query: str) -> tuple[list[dict], str]:
         )
 
     if not ROLE_HAS_SQL_ACCESS.get(role, False):
-        raise RoleNotAuthorizedError(f"Role '{role.value}' has no SQL retrieval access")
+        raise RoleNotAuthorizedInSQLError(f"Role '{role.value}' has no SQL retrieval access")
 
     handler = get_langfuse_handler()
     initial_state: SQLAgentState = {
