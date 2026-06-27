@@ -1,5 +1,5 @@
 from rag_service.app.agents.graph import agent_graph
-from shared.utils.llm_tracing import get_langfuse_handler
+from shared.observability.langfuse_client import get_langfuse_handler
 from shared.schemas.agent import AgentState
 from langfuse.decorators import observe, langfuse_context
 import logging

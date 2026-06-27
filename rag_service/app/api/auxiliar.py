@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from shared.schemas.example import ExampleResponse
 
 # Langfuse Client for LLM calls
-from shared.utils.llm_tracing import langfuse_client
+from shared.observability.langfuse_client import get_langfuse_client
 from langfuse.decorators import observe
 
 # Environment Variables
