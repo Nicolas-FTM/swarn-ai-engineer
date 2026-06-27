@@ -7,23 +7,21 @@ This script creates: 1. One admin user (cofounder role) with full access
 4. One HR user (hr role) with HR access
 """
 
-import sys
-import os
-from sqlalchemy.orm import Session
+# DDBB interaction
+from backend.app.database.session import add_user
 
-# Add the backend directory to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Data Schema
+from shared.schemas.user import User_Schema_DDBB
 
-from backend.app.database.session import SessionLocal
-from backend.app.models.user import User_Schema_DDBB
-from shared.config import settings
+# Hash Passwords
 from backend.app.services.auth import get_password_hash
 
+# Logger
 import logging
 
 logger = logging.getLogger(__name__)
 
-def create_users(db: Session) -> None:
+def create_users() -> None:
     """Create initial users for the application."""
     # Define users to create   
     users_data = [
@@ -59,50 +57,30 @@ def create_users(db: Session) -> None:
             "username": "hr_manager",
             "email": "hr@bakery.com",
             "password": "hr123456",
-            "full_name": "HR Manager",
+            "full_name": "HR Manager", 
             "role": "hr"
         }
     ]
 
-    # Create users
-    created_users = []
     for user_data in users_data:
-        # Check if user already exists
-        existing_user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.username == user_data["username"]).first()
-        if existing_user:
-            logger.info(f"User {user_data['username']} already exists, skipping...")
-            created_users.append(existing_user)
-            continue
+        user = User_Schema_DDBB(
+            username = user_data["username"],
+            email = user_data["email"],
+            hashed_password = get_password_hash(user_data["password"]),
+            full_name = user_data["full_name"],
+            role = user_data["role"]
+        ) 
 
-        # Create new user
-        hashed_password = get_password_hash(user_data["password"])
-        new_user = User_Schema_DDBB(
-            username=user_data["username"],
-            email=user_data["email"],
-            hashed_password=hashed_password,
-            full_name=user_data["full_name"],
-            role=user_data["role"]    
-        )
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        created_users.append(new_user)
-        logger.info(f"Created user: {new_user.username} with role: {new_user.role}")
-
-    return created_users
+        add_user(user) 
 
 def main() -> None:
     """Main function to execute the seeding."""
-    db = SessionLocal()
     try:
         logger.info("Seeding users...")
-        users = create_users(db)
-        logger.info(f"Successfully created {len(users)} users")
+        create_users()
+        logger.info(f"Successfully created users")
     except Exception as e:
         logger.error(f"Error seeding users: {e}")
-        db.rollback()
-    finally:
-        db.close()
 
 if __name__ == "__main__":
-    main()    
+    main()     

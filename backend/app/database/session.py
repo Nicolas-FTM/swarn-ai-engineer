@@ -1,18 +1,21 @@
 # FastAPI imports
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 
-# Tipados 
+# Types
 from typing import Any, List
 
 # SQL Alchemy
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 # Variables
 from shared.config import settings
 
 # Data Models
-from backend.app.models.user import User_Schema_DDBB
+from shared.schemas.user import User_Schema_DDBB
+
+# Session Stream
+from contextlib import contextmanager
 
 # Logger
 import logging
@@ -30,13 +33,12 @@ engine = create_engine(
 # Create session class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# DDBB Session
-db = SessionLocal()
-
 # Dependency to get DB session in routes
+@contextmanager
 def get_db():
     """Initialize DDBB."""
-
+    # DDBB Session
+    db = SessionLocal()
     try:
         yield db
     finally:
@@ -44,13 +46,11 @@ def get_db():
 
 def list_users() -> List[Any]:
     """Display information from the users table."""
-
-    try:
-        users = db.query(User_Schema_DDBB).all()
-    except Exception as e:
-        logger.error("There was a problem in the connection with the DDBB")
-    finally:
-        db.close()
+    with get_db() as db:
+        try:
+            users = db.query(User_Schema_DDBB).all()
+        except Exception as e:
+            logger.error(f"There was a problem in the connection with the DDBB: {e}")
 
     if not users:
         logger.error("No users found in the database.")
@@ -72,12 +72,11 @@ def list_users() -> List[Any]:
 
 def get_user(id: str) -> User_Schema_DDBB:
     """Get a user by id."""
-    try:
-        user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.id == id).first()
-    except Exception as e:
-        logger.error("There was a problem in the connection with the DDBB")
-    finally:
-        db.close()
+    with get_db() as db:
+        try:
+            user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.id == id).first()
+        except Exception as e:
+            logger.error(f"There was a problem in the connection with the DDBB: {e}")
         
     if user is None:
         raise HTTPException(status_code=401, detail=f"User not found by id: {id}")
@@ -85,13 +84,34 @@ def get_user(id: str) -> User_Schema_DDBB:
 
 def get_user_username(username: str) -> User_Schema_DDBB:
     """Get a user by username."""
-    try:
-        user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.username == username).first()
-    except Exception as e:
-        logger.error("There was a problem in the connection with the DDBB")
-    finally:
-        db.close()
-    
+    with get_db() as db:
+        try:
+            user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.username == username).first()
+        except Exception as e:
+            logger.error(f"There was a problem in the connection with the DDBB: {e}")
+        
     if user is None:
         raise HTTPException(status_code=401, detail=f"User not found by username: {id}")
     return user
+
+def add_user(user: User_Schema_DDBB) -> bool:
+    """Add a user."""
+    with get_db() as db:
+        try:
+            # Check if user already exists
+            existing_user = db.query(User_Schema_DDBB).filter(User_Schema_DDBB.username == user.username).first()
+
+            if existing_user:
+                logger.info(f"User {user.username} already exists, skipping...")
+                return False
+
+            # Create new user
+            db.add(user)
+            db.commit()
+            db.refresh(user)    
+            logger.info(f"Created user: {user.username} with role: {user.role}")
+
+        except Exception as e:
+            logger.error(f"There was a problem in the connection with the DDBB: {e}")
+ 
+    return True
