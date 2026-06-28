@@ -28,7 +28,6 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     """Chat request schema."""
 
-    role: RoleEnum
     query: str
     session_id: str # LangGraph Thread ID
 
