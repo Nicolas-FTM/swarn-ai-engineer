@@ -37,18 +37,22 @@ def run_chat(role: str, query: str, session_id: str) -> tuple[ChatState, str]:
         The final graph state, including the generated answer, route used,
         and sources.
     """
+    # Normalize role to its string value immediately: callers may pass
+    # either a RoleEnum (e.g. from current_user.role) or a plain string.
+    role_value = role.value if hasattr(role, "value") else role
+
     otel_trace_id = get_current_otel_trace_id()
     if otel_trace_id:
         langfuse_context.update_current_trace(
             metadata={"otel_trace_id": otel_trace_id, 
-                      "role": role,
+                      "role": role_value,
                       "session_id": session_id}
         )
 
     handler = get_langfuse_handler()
     initial_state: ChatState = {
         "query": query,
-        "role": role,
+        "role": role_value,
         "route": "",
         "context": [],
         "sources": [],
