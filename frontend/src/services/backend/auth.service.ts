@@ -6,7 +6,7 @@ export async function login(credentials: {
   password: string;
 }): Promise<Token> {
   const response = await api.post<Token>(
-    "/frontend/login",
+    "/api/frontend/login",
     credentials
   );
 
@@ -14,6 +14,6 @@ export async function login(credentials: {
 }
 
 export async function getUser(): Promise<User> {
-  const response = await api.get<User>("/frontend/me");
+  const response = await api.get<User>("/api/frontend/me");
   return response.data;
 }

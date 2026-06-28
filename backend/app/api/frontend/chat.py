@@ -33,14 +33,14 @@ logger = logging.getLogger(__name__)
 # Constants
 # ============================================================================
 router = APIRouter(
-            prefix="/chat",
+            prefix="/api/frontend",
             tags=["chat"]
             )
 
 # ============================================================================
 # Endpoints
 # ============================================================================
-@router.post("", response_model=ChatResponse)
+@router.post("/chat", response_model=ChatResponse)
 @observe(name="backend/chat_endpoint")
 async def chat(request: ChatRequest, current_user=Depends(get_current_user)) -> ChatResponse:
     """Submit a user question and return the agent's answer.

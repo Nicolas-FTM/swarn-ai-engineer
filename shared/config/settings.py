@@ -17,21 +17,21 @@ class Settings(BaseSettings):
     debug: bool = os.getenv("DEBUG", False)
 
     # RAG Service
-    rag_service_host: str = os.getenv("RAG_SERVICE_HOST", "localhost")
-    rag_service_port: int = os.getenv("RAG_SERVICE_PORT", 8000)
+    rag_service_host: str = os.getenv("RAG_SERVICE_HOST", "rag_service")
+    rag_service_port: int = os.getenv("RAG_SERVICE_PORT", 8001)
     rag_service_url: str = f"http://{rag_service_host}:{rag_service_port}"
 
     # Backend
-    backend_host: str = os.getenv("BACKEND_HOST", "localhost")
+    backend_host: str = os.getenv("BACKEND_HOST", "backend")
     backend_port: int = os.getenv("BACKEND_PORT", 8000)
     backend_url: str = f"http://{backend_host}:{backend_port}"
 
     # Frontend
-    frontend_host: str = os.getenv("FRONTEND_HOST", "localhost")
+    frontend_host: str = os.getenv("FRONTEND_HOST", "frontend")
     frontend_port: int = os.getenv("FRONTEND_PORT", 3000)
     frontend_url: str = f"http://{frontend_host}:{frontend_port}"
 
-    # Database (PostGreSQL)
+    # Database (PostGreSQL) 
     db_user: str = os.getenv("DB_USER", "postgres")
     db_password: str = os.getenv("DB_PASSWORD", "password")
     db_name: str = os.getenv("DB_NAME", "swarn_db")
