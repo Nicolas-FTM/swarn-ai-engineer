@@ -111,6 +111,8 @@ python = "3.12.*"
 pip = "*"
 packaging = "<24.0"
 setuptools = "<81"
+pytest = ">=9.1.1,<10"
+pytest-mock = ">=3.15.1,<4"
 
 [tool.pixi.pypi-dependencies]
 backend_service = { path = ".", editable = true }
