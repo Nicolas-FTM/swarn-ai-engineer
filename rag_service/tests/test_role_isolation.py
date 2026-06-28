@@ -40,7 +40,7 @@ def test_sales_has_no_vector_access_at_all(mock_qdrant_client, mock_embedding_mo
         retrieve_from_vector_store(role=RoleEnum.sales, query="any question")
 
     # The critical assertion: Qdrant must never be touched for an unauthorized role
-    mock_qdrant_client.search.assert_not_called()
+    mock_qdrant_client.query_points.assert_not_called()
 
 
 def test_baker_cannot_reach_confidential_collection(mock_qdrant_client, mock_embedding_model):
@@ -48,7 +48,7 @@ def test_baker_cannot_reach_confidential_collection(mock_qdrant_client, mock_emb
     retrieve_from_vector_store(role=RoleEnum.baker, query="bread recipe")
 
     called_collections = [
-        call.kwargs["collection_name"] for call in mock_qdrant_client.search.call_args_list
+        call.kwargs["collection_name"] for call in mock_qdrant_client.query_points.call_args_list
     ]
 
     assert "general_and_confidential" not in called_collections
@@ -61,7 +61,7 @@ def test_hr_cannot_reach_recipes_collection(mock_qdrant_client, mock_embedding_m
     retrieve_from_vector_store(role=RoleEnum.hr, query="vacation policy")
 
     called_collections = [
-        call.kwargs["collection_name"] for call in mock_qdrant_client.search.call_args_list
+        call.kwargs["collection_name"] for call in mock_qdrant_client.query_points.call_args_list
     ]
 
     assert "recipes_procedures" not in called_collections
@@ -74,7 +74,7 @@ def test_cofounder_cannot_reach_any_other_collection(mock_qdrant_client, mock_em
     retrieve_from_vector_store(role=RoleEnum.cofounder, query="expansion strategy")
 
     called_collections = [
-        call.kwargs["collection_name"] for call in mock_qdrant_client.search.call_args_list
+        call.kwargs["collection_name"] for call in mock_qdrant_client.query_points.call_args_list
     ]
 
     assert called_collections == ["cofounder_doc"]
@@ -85,7 +85,7 @@ def test_admin_can_reach_all_collections(mock_qdrant_client, mock_embedding_mode
     retrieve_from_vector_store(role=RoleEnum.admin, query="anything")
 
     called_collections = {
-        call.kwargs["collection_name"] for call in mock_qdrant_client.search.call_args_list
+        call.kwargs["collection_name"] for call in mock_qdrant_client.query_points.call_args_list
     }
 
     assert called_collections == {"recipes_procedures", "general_and_confidential", "cofounder_doc"}

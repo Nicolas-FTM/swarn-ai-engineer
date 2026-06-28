@@ -76,7 +76,7 @@ def retrieve_from_vector_store(role: RoleEnum, query: str, top_k: int = retrieva
         if not client.collection_exists(collection_name):
             continue
 
-        hits = client.search(
+        hits = client.query_points(
             collection_name=collection_name,
             query_vector=query_vector,
             limit=top_k,
