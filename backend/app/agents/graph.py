@@ -144,7 +144,7 @@ def route_after_classification(state: ChatState) -> str:
 # ============================================================================
 # Graph Definition
 # ============================================================================
-def build_chat_graph():
+def build_chat_graph(checkpointer: PostgresSaver):
     """Build and compile the main chat orchestration LangGraph.
 
     Uses PostgresSaver as checkpointer so conversation state persists
@@ -165,11 +165,12 @@ def build_chat_graph():
     graph.add_edge("retrieve_vector", "generate_answer")
     graph.add_edge("retrieve_sql", "generate_answer")
     graph.add_edge("generate_answer", END)
+    
+    return graph.compile(checkpointer=checkpointer)
 
-    checkpointer = PostgresSaver.from_conn_string(settings.db_url)
-    checkpointer.setup()  # creates LangGraph's internal checkpoint tables if missing
+checkpointer_cm = PostgresSaver.from_conn_string(settings.db_url)
+checkpointer = checkpointer_cm.__enter__()
 
-    return graph.compile()
+checkpointer.setup()
 
-
-chat_graph = build_chat_graph()
+chat_graph = build_chat_graph(checkpointer=checkpointer)

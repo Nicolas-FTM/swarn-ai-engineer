@@ -31,6 +31,7 @@ dependencies = [
     "langchain>=0.2.0,<0.3.0",
     "langchain-community>=0.2.0,<0.3.0",
     "langchain-ollama>=0.1.0",
+    "langgraph-checkpoint-postgres",
     "langgraph>=0.2.0",
     "ollama>=0.3.0",
     "packaging<=24.0",

@@ -22,9 +22,11 @@ from langchain_ollama import ChatOllama
 
 # LangGraph
 from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.postgres import PostgresSaver
 
 # Langfuse
 from langfuse.decorators import observe, langfuse_context
+
 
 # Project Imports
 from shared.config.settings import settings
@@ -136,7 +138,7 @@ def execute_sql_node(state: SQLAgentState) -> SQLAgentState:
     return {**state, "rows": rows}
 
 
-def _route_after_validation(state: SQLAgentState) -> str:
+def route_after_validation(state: SQLAgentState) -> str:
     """Route to execution or end the graph, depending on validation result.
 
     Args:
@@ -146,10 +148,11 @@ def _route_after_validation(state: SQLAgentState) -> str:
         The name of the next node, or END if validation failed.
     """
     return END if state["error"] else "execute_sql"
+
 # ============================================================================
 # Graph Definition
 # ============================================================================
-def _build_sql_graph():
+def build_sql_graph(checkpointer: PostgresSaver):
     """Build and compile the SQL generation LangGraph.
 
     Returns:
@@ -164,13 +167,17 @@ def _build_sql_graph():
 
     graph.add_edge(START, "generate_sql")
     graph.add_edge("generate_sql", "validate_sql")
-    graph.add_conditional_edges("validate_sql", _route_after_validation)
+    graph.add_conditional_edges("validate_sql", route_after_validation)
     graph.add_edge("execute_sql", END)
 
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 
+checkpointer_cm = PostgresSaver.from_conn_string(settings.db_url)
+checkpointer = checkpointer_cm.__enter__()
 
-sql_agent_graph = _build_sql_graph()
+checkpointer.setup()
+
+sql_agent_graph = build_sql_graph(checkpointer)
 
 # ============================================================================
 # Services
