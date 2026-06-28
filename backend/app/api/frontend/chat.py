@@ -14,8 +14,7 @@ Example:
 # Packages
 # ============================================================================
 # FastAPI
-from fastapi import APIRouter, Depends
-from opentelemetry import trace as otel_trace
+from fastapi import APIRouter, Depends, HTTPException, status
 
 # Langfuse
 from langfuse.decorators import observe
@@ -24,6 +23,11 @@ from langfuse.decorators import observe
 from backend.app.agents.runner import run_chat
 from backend.app.services.auth import get_current_user
 from shared.schemas.chat import ChatRequest, ChatResponse
+from shared.guardrails.output_backend import validate_response_route
+
+# Logger
+import logging
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # Constants
@@ -50,7 +54,16 @@ async def chat(request: ChatRequest, current_user=Depends(get_current_user)) -> 
         query=request.query,
         session_id=request.session_id
         )
-
+    
+    try:
+        validate_response_route(current_user.role, result["route"])
+    except Exception as e:
+        logger.error("Malicious Prompt Injection detected")
+        raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"User with role {current_user.role} accesing to non-associated data",
+            )
+    
     return ChatResponse(
         answer=result["answer"],
         sources=result["sources"],
