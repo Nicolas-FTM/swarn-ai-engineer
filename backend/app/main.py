@@ -16,8 +16,7 @@ from backend.app.api import (
 )
 from backend.app.api.frontend import (
     auth,
-    chat,
-    users
+    chat
 )
 from backend.app.api.rag_service import (
     ingest
@@ -101,7 +100,6 @@ async def general_exception_handler(request, exc):
 # Include routers
 app.include_router(health.router)
 app.include_router(auth.router)
-app.include_router(users.router)
 app.include_router(chat.router)
 app.include_router(ingest.router)
 
