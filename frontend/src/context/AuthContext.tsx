@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { getUser, login } from '../services/backend/auth.service';
 import { AuthState, LoginCredentials, User } from '../types/auth';
+import { clearChatSession } from '../hooks/useChatSession';
 
 // Possible Actions for the context
 type Action =
@@ -88,6 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    clearChatSession()
     dispatch({ type: 'LOGOUT' });
   };
 

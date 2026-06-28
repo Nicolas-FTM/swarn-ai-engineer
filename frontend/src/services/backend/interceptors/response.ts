@@ -1,4 +1,5 @@
 import { api } from "../client";
+import { clearChatSession } from "../../../hooks/useChatSession";
 import type { AxiosError, AxiosResponse } from "axios";
 
 export function setupResponseInterceptor() {
@@ -10,6 +11,7 @@ export function setupResponseInterceptor() {
       if (status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        clearChatSession();
         window.location.href = "/login";
       }
 
