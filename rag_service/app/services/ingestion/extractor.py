@@ -43,6 +43,7 @@ EXTENSION_LOADERS = {
 # ============================================================================
 # Services
 # ============================================================================
+@traced_span()
 def extract_documents(file_path: Path) -> list[Document]:
     """Extract LangChain documents from a single source file.
 

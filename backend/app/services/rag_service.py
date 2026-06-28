@@ -18,6 +18,7 @@ import httpx
 # Project Imports
 from shared.config.settings import settings
 from shared.config.loader import load_agents
+from shared.observability.telemetry import traced_span
 
 retrieval_vector_conf = load_agents().get("retrieval", None)
 
@@ -30,6 +31,7 @@ class RetrievalError(Exception):
 # ============================================================================
 # Services
 # ============================================================================
+@traced_span()
 def retrieve_vector(role: str, query: str, top_k: int = retrieval_vector_conf.get("top_k")) -> tuple[list[str], list[str]]:
     """Call rag_service's /retrieve/vector endpoint.
 
@@ -58,7 +60,7 @@ def retrieve_vector(role: str, query: str, top_k: int = retrieval_vector_conf.ge
     sources = [chunk["source"] for chunk in payload["chunks"]]
     return texts, sources
 
-
+@traced_span()
 def retrieve_sql(role: str, query: str) -> tuple[list[dict], str]:
     """Call rag_service's /retrieve/sql endpoint.
 
