@@ -17,6 +17,7 @@ Example:
 # FastAPI
 from fastapi import APIRouter, HTTPException
 
+# Langfuse
 from langfuse.decorators import observe
 
 # Project Imports
@@ -48,6 +49,7 @@ router = APIRouter(
 # Endpoints
 # ============================================================================
 @router.post("/vector", response_model=RetrieveVectorResponse)
+@observe(name="rag_service/retrieve_vector_endpoint")
 async def retrieve_vector(request: RetrieveVectorRequest) -> RetrieveVectorResponse:
     """Retrieve relevant document chunks for a given role and query."""
     try:

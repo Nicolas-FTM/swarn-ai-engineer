@@ -26,6 +26,9 @@ from shared.schemas.retrieval import RetrievedChunk
 from rag_service.app.services.ingestion.embedder import embedding_model
 from shared.observability.telemetry import traced_span
 
+# Langfuse
+from langfuse.decorators import observe
+
 
 retrieval_vector_conf = load_agents().get("retrieval", None).get("vector", None)
 
@@ -44,6 +47,7 @@ client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
 # Services
 # ============================================================================
 @traced_span()
+@observe(name="rag_service/vector_retrieval")
 def retrieve_from_vector_store(role: RoleEnum, query: str, top_k: int = retrieval_vector_conf["top_k"]) -> list[RetrievedChunk]:
     """Retrieve relevant chunks from the collections allowed for a given role.
 
