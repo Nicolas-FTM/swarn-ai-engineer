@@ -20,6 +20,10 @@ from shared.config.settings import settings
 from shared.config.loader import load_agents
 from shared.observability.telemetry import traced_span
 
+# Logger
+import logging
+logger = logging.getLogger(__name__)
+
 retrieval_vector_conf = load_agents().get("retrieval", None)
 
 # ============================================================================
@@ -46,6 +50,7 @@ def retrieve_vector(role: str, query: str, top_k: int = retrieval_vector_conf.ge
     Raises:
         RetrievalError: If rag_service rejects or fails the request.
     """
+
     response = httpx.post(
         f"{settings.rag_service_url}/retrieve/vector",
         json={"role": role, "query": query, "top_k": top_k},
@@ -74,6 +79,7 @@ def retrieve_sql(role: str, query: str) -> tuple[list[dict], str]:
     Raises:
         RetrievalError: If rag_service rejects or fails the request.
     """
+
     response = httpx.post(
         f"{settings.rag_service_url}/retrieve/sql",
         json={"role": role, "query": query},
