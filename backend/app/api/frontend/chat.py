@@ -45,12 +45,17 @@ async def chat(request: ChatRequest, current_user=Depends(get_current_user)) -> 
     never from the request body, to enforce role isolation upstream of
     rag_service's own guardrails.
     """
-    result = run_chat(role=current_user.role, query=request.query)
+    result, _ = run_chat(
+        role=current_user.role,
+        query=request.query,
+        session_id=request.session_id
+        )
 
     return ChatResponse(
         answer=result["answer"],
         sources=result["sources"],
         route_used=result["route"],
+        session_id=request.session_id
     )
 
 

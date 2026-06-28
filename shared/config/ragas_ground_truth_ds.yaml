@@ -1,0 +1,34 @@
+# ============================================================================
+# Golden dataset for offline Ragas evaluation.
+# Each entry maps to a role, so we can also detect role-isolation issues
+# (e.g. a "sales" question accidentally retrieving vector context).
+# ============================================================================
+
+- role: admin
+  question: "Which are the ingredients for the the biscuit base in the recipe of Signature Baked Cheesecake with Gamonéu Curd?"
+  ground_truth: "250 grams digestive biscuits, 125 grams unsalted butter and a melted a pinch of salt"
+
+- role: cofounder
+  question: "Which are the ingredients for the the biscuit base in the recipe of Signature Baked Cheesecake with Gamonéu Curd?"
+  ground_truth: "250 grams digestive biscuits, 125 grams unsalted butter and a melted a pinch of salt"
+
+- role: baker
+  question: "Which are the ingredients for the the biscuit base in the recipe of Signature Baked Cheesecake with Gamonéu Curd?"
+  ground_truth: "I don't have this recipe"
+
+- role: hr
+  question: "Which are the dressing code for the bakery chefs and production staff?"
+  ground_truth: |
+    "The dress code for the bakery chefs and production staff is: 
+      ● Uniform (Company-Provided): 
+        ○ Jacket: Clean, white chef's jacket. 
+        ○ Trousers: Black or checkered chef's trousers. 
+        ○ Apron: Full-length white or black apron. 
+        ○ Head Covering: A chef's hat, hairnet, or company-approved bandana 
+        must be worn at all times in the production area. All hair must be fully 
+        contained. 
+      ● Footwear: Sturdy, non-slip, closed-toe safety shoes are mandatory. 
+      ● Jewellery & Accessories: No jewellery (rings, bracelets, watches, earrings) is 
+      permitted, with the exception of a single, plain wedding band. No nail polish or 
+      false nails are allowed."
+

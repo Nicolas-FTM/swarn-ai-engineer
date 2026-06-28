@@ -9,6 +9,7 @@ This module provides functions for:
 Example:
     result = run_chat(role="baker", query="how do I make bread?")
 """
+
 # ============================================================================
 # Packages
 # ============================================================================
@@ -25,7 +26,7 @@ from shared.observability.telemetry import get_current_otel_trace_id
 # Services
 # ============================================================================
 @observe(name="backend/chat_graph")
-def run_chat(role: str, query: str) -> ChatState:
+def run_chat(role: str, query: str, session_id: str) -> tuple[ChatState, str]:
     """Invoke the main chat orchestration graph for a given role and query.
 
     Args:
@@ -39,7 +40,9 @@ def run_chat(role: str, query: str) -> ChatState:
     otel_trace_id = get_current_otel_trace_id()
     if otel_trace_id:
         langfuse_context.update_current_trace(
-            metadata={"otel_trace_id": otel_trace_id, "role": role}
+            metadata={"otel_trace_id": otel_trace_id, 
+                      "role": role,
+                      "session_id": session_id}
         )
 
     handler = get_langfuse_handler()
@@ -54,7 +57,21 @@ def run_chat(role: str, query: str) -> ChatState:
 
     result = chat_graph.invoke(
         initial_state,
-        config={"callbacks": [handler]},
+        config={"callbacks": [handler],
+                "configurable": {"thread_id": session_id}
+                },
     )
 
-    return result
+    # Store the data needed for later Ragas evaluation directly on the trace,
+    # so the online evaluator doesn't need to parse nested graph spans.
+    langfuse_context.update_current_trace(
+        metadata={
+            "ragas_question": query,
+            "ragas_context": result["context"],
+            "ragas_answer": result["answer"],
+        }
+    )
+
+    langfuse_trace_id = langfuse_context.get_current_trace_id()
+
+    return result, langfuse_trace_id

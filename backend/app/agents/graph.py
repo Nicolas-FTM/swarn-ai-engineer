@@ -20,6 +20,7 @@ from langchain_ollama import ChatOllama
 
 # LangGraph
 from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.postgres import PostgresSaver
 
 # Shared Config Loader
 from shared.config.loader import load_agents
@@ -146,8 +147,11 @@ def route_after_classification(state: ChatState) -> str:
 def build_chat_graph():
     """Build and compile the main chat orchestration LangGraph.
 
+    Uses PostgresSaver as checkpointer so conversation state persists
+    across backend restarts and survives multiple replicas.
+
     Returns:
-        A compiled LangGraph ready to be invoked.
+        A compiled LangGraph ready to be invoked, with checkpointing enabled.
     """
     graph = StateGraph(ChatState)
 
@@ -161,6 +165,9 @@ def build_chat_graph():
     graph.add_edge("retrieve_vector", "generate_answer")
     graph.add_edge("retrieve_sql", "generate_answer")
     graph.add_edge("generate_answer", END)
+
+    checkpointer = PostgresSaver.from_conn_string(settings.db_url)
+    checkpointer.setup()  # creates LangGraph's internal checkpoint tables if missing
 
     return graph.compile()
 

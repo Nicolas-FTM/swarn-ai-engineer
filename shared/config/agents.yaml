@@ -30,6 +30,9 @@ chunker:
   size: 800
   overlap: 120
 
+evaluation:
+  sample_rate: 0.1  # evaluate ~10% of real conversations
+  judge_model: "llama3.1"
 
 intent_router:
   # Prompt used by the LLM node that classifies the user's question
