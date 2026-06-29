@@ -76,19 +76,19 @@ def retrieve_from_vector_store(role: RoleEnum, query: str, top_k: int = retrieva
         if not client.collection_exists(collection_name):
             continue
 
-        hits = client.query_points(
+        response = client.query_points(
             collection_name=collection_name,
-            query_vector=query_vector,
+            query=query_vector,
             limit=top_k,
         )
 
-        for hit in hits:
+        for hit in response.points:
             results.append(
                 RetrievedChunk(
                     text=hit.payload.get("text", ""),
                     source=hit.payload.get("source", ""),
                     chunk_id=hit.payload.get("chunk_id", ""),
-                    score=hit.score,
+                    score=hit.score, 
                 )
             )
 

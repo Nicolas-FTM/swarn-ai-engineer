@@ -18,7 +18,7 @@ Example:
 import pytest
 
 # Unittest Mock
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 # ============================================================================
 # Fixtures
@@ -32,7 +32,7 @@ def mock_qdrant_client():
     """
     with patch("rag_service.app.services.retrieval.vector_store.client") as mock_client:
         mock_client.collection_exists.return_value = True
-        mock_client.query_points.return_value = []
+        mock_client.query_points.return_value = MagicMock(points=[])
         yield mock_client
 
 
