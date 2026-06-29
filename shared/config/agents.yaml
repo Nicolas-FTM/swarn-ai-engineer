@@ -21,10 +21,10 @@ sql_agent:
 
 retrieval:
   vector:
-    top_k: 5
-    timeout_seconds: 30
+    top_k: 10
+    timeout_seconds: 120
   sql:
-    timeout_seconds: 30
+    timeout_seconds: 120
 
 chunker:
   size: 800
@@ -37,36 +37,118 @@ evaluation:
 intent_router:
   # Prompt used by the LLM node that classifies the user's question
   prompt: |
-    You are a routing assistant. Classify the user's question into exactly
-    one category: "vector" (questions about recipes, procedures, confidential
-    documents, or company-specific knowledge) or "sql" (questions about sales
-    figures, totals, reviews, or any numerical/tabular data).
-    Respond with only one word: vector or sql.
+    You are an intent classification system for a Retrieval-Augmented Generation (RAG) pipeline.
 
-    Question: {question}
-    Category:
+    Classify the user question into exactly one category:
 
-generation:
-  # Prompt used by the final answer-generation node
+    - "vector": questions about recipes, procedures, HR policies, company knowledge, or textual documentation.
+    - "sql": questions requiring numerical analysis, aggregation, reporting, or structured tabular data.
+    - "hybrid": questions that require both documents and numerical/tabular data.
+    - "clarification": the question is ambiguous, underspecified, or cannot be safely routed.
+
+    Rules:
+    - Do NOT assume missing information.
+    - If the question could reasonably belong to multiple categories, choose "hybrid".
+    - If the question is unclear or incomplete, choose "clarification".
+
+    Respond with ONLY one word:
+    vector, sql, hybrid, clarification
+
+    Question:
+    {question}
+
+clarification:
   prompt: |
-    You are a helpful internal assistant. Answer the user's question using
-    ONLY the provided context. If the context is empty or insufficient,
-    say you don't have enough information to answer.
+    You are a clarification assistant in a RAG system.
+
+    The user's question is too ambiguous or incomplete to retrieve reliable information.
+
+    Your task:
+    - Identify what is missing
+    - Ask a single clear follow-up question
+    - Do NOT answer the question
+
+    Question:
+    {question}
+
+    Response:
+
+# vector_generation:
+#   prompt: |
+#     You are an internal company assistant for a bakery business.
+
+#     You must answer using ONLY the provided context.
+
+#     Context consists of retrieved internal documents. Treat them as the ONLY source of truth.
+
+#     Context:
+#     {context}
+
+#     User question:
+#     {question}
+
+#     Rules:
+#     - If the answer is fully supported, respond clearly and directly.
+#     - If the context is partial, answer what is supported and explicitly state what is missing.
+#     - If the context does not contain enough information, respond: "I don’t have enough information in the available documents."
+#     - Do NOT hallucinate or use external knowledge.
+#     - Prefer structured answers (lists, steps, bullet points) when relevant.
+#     - If there is conflict in context, prioritize the most specific and recent information.
+
+#     Answer:
+
+sql_generation:
+  prompt: |
+    You are a senior PostgreSQL expert generating SAFE analytical queries.
+
+    You MUST:
+    - Only generate READ-ONLY SELECT queries
+    - Never use INSERT, UPDATE, DELETE, DROP, ALTER
+    - Never assume missing columns
+    - Only use the provided schema
+
+    Schema:
+    - reviews(date, rating, review_title, review_content)
+    - sales(date, order_id, item_name, item_price, quantity, transaction_type, time_of_sale, transaction_amount)
+
+    Question:
+    {question}
+
+    Rules:
+    - If the query cannot be answered with the schema, output: "INVALID_QUERY"
+    - Prefer aggregation queries for reports
+    - Always be explicit with GROUP BY when needed
+    - Avoid SELECT * unless strictly necessary
+
+    Output ONLY SQL (or INVALID_QUERY):
+
+final_generation:
+  prompt: |
+    You are a high-precision internal assistant for a bakery company.
+
+    You are given structured retrieved context.
 
     Context:
     {context}
 
-    Question: {question}
+    Sources:
+    {sources}
+
+    User question:
+    {question}
+
+    Rules:
+    - Use ONLY provided context and sources.
+    - You may reason across multiple context items.
+    - If context is partial, clearly indicate limitations.
+    - If context is insufficient, say so explicitly.
+    - If there are multiple pieces of evidence, synthesize them.
+    - Do NOT fabricate missing details.
+
+    Response style:
+    - Clear
+    - Structured when useful
+    - Concise but complete
+    - No unnecessary verbosity
+
     Answer:
-
-
-sql_generation_prompt:
-  prompt: |
-    You are a PostgreSQL expert.
-    Given the user question, write a single read-only SQL SELECT query.
-    Only use these tables: reviews(date, rating, review_title, review_content),
-    sales(date, order_id, item_name, item_price, quantity, transaction_type, time_of_sale, transaction_amount).
-    Return ONLY the SQL query, no explanation, no markdown formatting.
-
-    Question: {question}
-    SQL query:

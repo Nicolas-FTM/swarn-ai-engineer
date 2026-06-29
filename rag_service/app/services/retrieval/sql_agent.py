@@ -60,7 +60,7 @@ class UnsafeQueryError(Exception):
 ALLOWED_TABLES = {"reviews", "bakery_sales_data"}
 FORBIDDEN_KEYWORDS = {"insert", "update", "delete", "drop", "alter", "truncate", "grant"}
 
-SQL_GENERATION_PROMPT = load_agents().get("sql_generation_prompt", None).get("prompt", None)
+SQL_GENERATION_PROMPT = load_agents().get("sql_generation", {}).get("prompt", "")
 
 # ============================================================================
 # Helpers
