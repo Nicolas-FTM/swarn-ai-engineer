@@ -37,6 +37,10 @@ from rag_service.app.services.retrieval.sql_agent import (
     UnsafeQueryError,
 )
 
+# Logger
+import logging
+logger = logging.getLogger(__name__)
+
 # ============================================================================
 # Constants
 # ============================================================================
@@ -56,6 +60,8 @@ async def retrieve_vector(request: RetrieveVectorRequest) -> RetrieveVectorRespo
         chunks = retrieve_from_vector_store(request.role, request.query, request.top_k)
     except VectorRoleNotAuthorizedError as e:
         raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error: {e}")
 
     return RetrieveVectorResponse(chunks=chunks)
 
@@ -66,8 +72,12 @@ async def retrieve_sql(request: RetrieveSQLRequest) -> RetrieveSQLResponse:
     try:
         rows, generated_sql = retrieve_from_sql(request.role, request.query)
     except SQLRoleNotAuthorizedError as e:
+        logger.error(f"User with no role: {e}")
         raise HTTPException(status_code=403, detail=str(e))
     except UnsafeQueryError as e:
+        logger.error(f"Unsafe error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error: {e}")
 
     return RetrieveSQLResponse(rows=rows, generated_sql=generated_sql)
