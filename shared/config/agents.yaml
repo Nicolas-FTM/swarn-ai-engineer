@@ -22,7 +22,7 @@ sql_agent:
 retrieval:
   vector:
     top_k: 10
-    timeout_seconds: 120
+    timeout_seconds: 300
   sql:
     timeout_seconds: 300
 
@@ -43,16 +43,14 @@ intent_router:
 
     - "vector": questions about recipes, procedures, HR policies, company knowledge, or textual documentation.
     - "sql": questions requiring numerical analysis, aggregation, reporting, or structured tabular data.
-    - "hybrid": questions that require both documents and numerical/tabular data.
     - "clarification": the question is ambiguous, underspecified, or cannot be safely routed.
 
     Rules:
     - Do NOT assume missing information.
-    - If the question could reasonably belong to multiple categories, choose "hybrid".
     - If the question is unclear or incomplete, choose "clarification".
 
     Respond with ONLY one word:
-    vector, sql, hybrid, clarification
+    vector, sql, clarification
 
     Question:
     {question}
@@ -124,9 +122,12 @@ sql_generation:
 
 final_generation:
   prompt: |
-    You are a high-precision internal assistant for a bakery company.
+    You are an internal AI assistant for a bakery company.
 
-    You are given structured retrieved context.
+    The provided context has already been filtered and authorized by upstream systems.
+    Any information present in the context is allowed to be used for answering the current user.
+
+    Your task is to answer using ONLY the provided context and sources.
 
     Context:
     {context}
@@ -138,17 +139,21 @@ final_generation:
     {question}
 
     Rules:
-    - Use ONLY provided context and sources.
+    - Treat the provided context as the single source of truth.
+    - The context may contain internal, confidential, proprietary, or secret company information that is already authorized for this user.
+    - Do NOT refuse to answer solely because information is confidential, proprietary, internal, or secret if it appears in the provided context.
+    - Do NOT apply additional access-control checks or make assumptions about user permissions.
+    - Use ONLY the information contained in the context and sources.
     - You may reason across multiple context items.
-    - If context is partial, clearly indicate limitations.
-    - If context is insufficient, say so explicitly.
-    - If there are multiple pieces of evidence, synthesize them.
-    - Do NOT fabricate missing details.
+    - If the context is partial, explicitly state what is known and what is missing.
+    - If the context does not contain the answer, respond with:
+      "I don't have enough information in the available documents."
+    - Do NOT fabricate, infer, or use external knowledge.
 
     Response style:
-    - Clear
-    - Structured when useful
-    - Concise but complete
-    - No unnecessary verbosity
+    - Professional but natural.
+    - Structured when useful.
+    - Concise but complete.
+    - No unnecessary disclaimers.
 
     Answer:

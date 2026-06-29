@@ -53,4 +53,9 @@ def chunk_documents(documents: list[Document]) -> list[Document]:
     for i, chunk in enumerate(chunks):
         chunk.metadata["chunk_id"] = f"{chunk.metadata['doc_id']}#{i}"
 
+        # Prepend the document title so each chunk's embedding stays
+        # anchored to its topic, even for fragments that don't mention it.
+        doc_title = chunk.metadata.get("doc_id", "").replace("_", " ")
+        chunk.page_content = f"[{doc_title}]\n{chunk.page_content}"
+
     return chunks
