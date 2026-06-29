@@ -32,7 +32,7 @@ from shared.config.settings import settings
 from shared.config.loader import load_agents
 from shared.database.postgres import get_db
 from shared.schemas.role import RoleEnum, ROLE_HAS_SQL_ACCESS
-from rag_service.app.services.retrieval.sql_graph_state import SQLAgentState
+from shared.schemas.agent import SQLAgentState
 from shared.observability.langfuse_client import get_langfuse_handler
 from shared.observability.telemetry import get_current_otel_trace_id
 
