@@ -22,7 +22,7 @@ import pytest
 from unittest.mock import patch
 
 # Project Imports
-from app.agents.tools import build_vector_tool, build_sql_tool
+from backend.app.agents.tools import build_vector_tool, build_sql_tool
 
 # ============================================================================
 # Tests — Tool Role Closure
