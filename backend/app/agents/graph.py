@@ -49,6 +49,11 @@ if main_agent_config.get("provider", None) == "ollama":
         temperature=main_agent_config["temperature"],
     )         
 
+checkpointer_cm = PostgresSaver.from_conn_string(settings.db_url)
+checkpointer = checkpointer_cm.__enter__()
+
+checkpointer.setup()
+
 # ============================================================================
 # Graph Nodes
 # ============================================================================
@@ -144,7 +149,7 @@ def route_after_classification(state: ChatState) -> str:
 # ============================================================================
 # Graph Definition
 # ============================================================================
-def build_chat_graph(checkpointer: PostgresSaver):
+def build_chat_graph():
     """Build and compile the main chat orchestration LangGraph.
 
     Uses PostgresSaver as checkpointer so conversation state persists
@@ -168,9 +173,4 @@ def build_chat_graph(checkpointer: PostgresSaver):
     
     return graph.compile(checkpointer=checkpointer)
 
-checkpointer_cm = PostgresSaver.from_conn_string(settings.db_url)
-checkpointer = checkpointer_cm.__enter__()
-
-checkpointer.setup()
-
-chat_graph = build_chat_graph(checkpointer=checkpointer)
+chat_graph = build_chat_graph()

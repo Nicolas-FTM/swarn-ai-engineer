@@ -22,7 +22,6 @@ from langchain_ollama import ChatOllama
 
 # LangGraph
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.postgres import PostgresSaver
 
 # Langfuse
 from langfuse.decorators import observe, langfuse_context
@@ -152,7 +151,7 @@ def route_after_validation(state: SQLAgentState) -> str:
 # ============================================================================
 # Graph Definition
 # ============================================================================
-def build_sql_graph(checkpointer: PostgresSaver):
+def build_sql_graph():
     """Build and compile the SQL generation LangGraph.
 
     Returns:
@@ -170,14 +169,9 @@ def build_sql_graph(checkpointer: PostgresSaver):
     graph.add_conditional_edges("validate_sql", route_after_validation)
     graph.add_edge("execute_sql", END)
 
-    return graph.compile(checkpointer=checkpointer)
+    return graph.compile()
 
-checkpointer_cm = PostgresSaver.from_conn_string(settings.db_url)
-checkpointer = checkpointer_cm.__enter__()
-
-checkpointer.setup()
-
-sql_agent_graph = build_sql_graph(checkpointer)
+sql_agent_graph = build_sql_graph()
 
 # ============================================================================
 # Services
