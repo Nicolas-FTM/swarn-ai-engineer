@@ -54,7 +54,7 @@ def retrieve_vector(role: str, query: str, top_k: int = retrieval_vector_conf.ge
     response = httpx.post(
         f"{settings.rag_service_url}/retrieve/vector",
         json={"role": role, "query": query, "top_k": top_k},
-        timeout=120.0,
+        timeout=300.0,
     )
 
     if response.status_code != 200:
@@ -83,7 +83,7 @@ def retrieve_sql(role: str, query: str) -> tuple[list[dict], str]:
     response = httpx.post(
         f"{settings.rag_service_url}/retrieve/sql",
         json={"role": role, "query": query},
-        timeout=120.0,
+        timeout=300.0,
     )
 
     if response.status_code != 200:

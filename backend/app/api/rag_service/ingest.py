@@ -39,7 +39,7 @@ async def trigger_ingestion(_: None = Depends(require_admin)) -> dict:
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{settings.rag_service_url}/ingest/run",
-            timeout=120.0,
+            timeout=300.0,
         )
 
     if response.status_code != 200:

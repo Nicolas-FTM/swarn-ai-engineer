@@ -24,7 +24,7 @@ retrieval:
     top_k: 10
     timeout_seconds: 120
   sql:
-    timeout_seconds: 120
+    timeout_seconds: 300
 
 chunker:
   size: 800
