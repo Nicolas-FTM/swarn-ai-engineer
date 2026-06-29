@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { api } from '../../services/backend/client'
 import { useChatSession } from '../../hooks/useChatSession'
 import ReactMarkdown from 'react-markdown'
+import {Mermaid} from "../charts/mermaid"
 
 interface Message {
   id: string
@@ -93,9 +94,28 @@ function ChatWindow() {
                     : 'bg-gray-100 text-gray-900 rounded-bl-none'
                 }`}
               >
-                <div className="text-sm prose-sm max-w-none [&_p]:m-0 [&_ul]:my-1 [&_ol]:my-1">
-                  <ReactMarkdown>{message.text}</ReactMarkdown>
-                </div>
+                
+              <div className="text-sm prose-sm max-w-none [&_p]:m-0 [&_ul]:my-1 [&_ol]:my-1">
+                <ReactMarkdown
+                  components={{
+                    code({ className, children }) {
+                      const match = /language-mermaid/.test(className || "");
+
+                      if (match) {
+                        return <Mermaid chart={String(children).trim()} />;
+                      }
+
+                      return (
+                        <code className={className}>
+                          {children}
+                        </code>
+                      );
+                    }
+                  }}
+                >
+                  {message.text}
+                </ReactMarkdown>
+              </div>
 
                 {message.sources && message.sources.length > 0 && (
                   <p className="text-xs mt-1 text-gray-500 italic">
