@@ -4,10 +4,6 @@
 # (e.g. a "sales" question accidentally retrieving vector context).
 # ============================================================================
 
-- role: admin
-  question: "Which are the ingredients for the the biscuit base in the recipe of Signature Baked Cheesecake with Gamonéu Curd?"
-  ground_truth: "250 grams digestive biscuits, 125 grams unsalted butter and a melted a pinch of salt"
-
 - role: cofounder
   question: "Which are the ingredients for the the biscuit base in the recipe of Signature Baked Cheesecake with Gamonéu Curd?"
   ground_truth: "250 grams digestive biscuits, 125 grams unsalted butter and a melted a pinch of salt"

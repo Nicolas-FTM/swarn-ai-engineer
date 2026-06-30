@@ -22,11 +22,48 @@ from datasets import Dataset
 
 # Project Imports
 from shared.observability.langfuse_client import get_langfuse_client
+from shared.config.loader import load_agents
+from shared.config.settings import settings
+
+# LangChain Ollama
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+
+# Ragas LLM/Embeddings Wrappers
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
 
 # ============================================================================
 # Constants
 # ============================================================================
 TRACE_NAME = "backend/chat_graph"
+
+# Evaluator LLM/embeddings: ragas defaults to OpenAI unless explicitly
+# overridden, so we wrap our local Ollama models for evaluation as well,
+# keeping the entire pipeline (generation + evaluation) self-hosted.
+agents_config = load_agents()
+main_agent_config = agents_config.get("main_agent", {})
+embedding_config = agents_config.get("llm_embedding", {})
+
+evaluator_llm = None
+evaluator_embeddings = None
+
+if main_agent_config.get("provider", "") == "ollama":
+    evaluator_llm = LangchainLLMWrapper(
+        ChatOllama(
+            model=main_agent_config.get("model", "llama3.1"),
+            base_url=settings.ollama_base_url,
+            temperature=0,
+        )
+    )     
+
+if embedding_config.get("provider", "") == "ollama":
+    embedding_model = LangchainEmbeddingsWrapper(
+        OllamaEmbeddings(
+            model=embedding_config.get("model", "mxbai-embed-large"),
+            base_url=settings.ollama_base_url,
+        )
+    )
+
 
 # ============================================================================
 # Helpers
@@ -85,7 +122,12 @@ def run_online_evaluation(limit: int = 20) -> dict:
         for e in entries
     ])
 
-    scores = evaluate(dataset, metrics=[faithfulness, answer_relevancy])
+    scores = evaluate(
+        dataset,
+        metrics=[faithfulness, answer_relevancy],
+        llm=evaluator_llm,
+        embeddings=evaluator_embeddings,
+    )
     log_scores_to_langfuse(scores, entries)
 
     scores_df = scores.to_pandas()
