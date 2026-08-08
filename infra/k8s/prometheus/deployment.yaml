@@ -1,0 +1,110 @@
+########################################
+# Prometheus PersistentVolumeClaim
+# Storage for Prometheus metrics data
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: PersistentVolumeClaim # Type of Kubernetes Object. PVC requests storage resources
+metadata:
+  name: prometheus-pvc # PVC name
+  namespace: swarn-ai # Namespace where PVC runs
+spec:
+  accessModes:
+    - ReadWriteOnce # Only one pod can write at a time
+  resources:
+    requests:
+      storage: 5Gi # Disk size allocated for time-series metrics data
+
+########################################
+# Prometheus ConfigMap
+# Configuration for metrics scraping
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: ConfigMap # Type of Kubernetes Object. ConfigMap stores configuration data
+metadata:
+  name: prometheus-config # ConfigMap name
+  namespace: swarn-ai # Namespace where ConfigMap runs
+data:
+  prometheus.yml: | # Prometheus configuration file
+    global: # Global settings
+      scrape_interval: 15s # Collect metrics every 15 seconds
+      evaluation_interval: 15s # Evaluate rules every 15 seconds
+    scrape_configs: # Define what metrics to scrape
+      - job_name: 'prometheus' # Prometheus self-monitoring
+        static_configs:
+          - targets: ['localhost:9090'] # Prometheus own metrics
+      - job_name: 'backend' # Backend application metrics
+        static_configs:
+          - targets: ['backend:8000'] # Backend service
+
+########################################
+# Prometheus Deployment
+# Metrics collection and time-series database
+########################################
+
+---
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Deployment # Type of Kubernetes Object. Deployment manages Prometheus instance
+metadata:
+  name: prometheus # Name of the deployment
+  namespace: swarn-ai # Namespace where deployment runs
+spec:
+  replicas: 1 # Single Prometheus instance
+  selector:
+    matchLabels:
+      app: prometheus # Connects Deployment with Pods
+  template:
+    metadata:
+      labels:
+        app: prometheus # Label used by Service to find this pod
+    spec:
+      containers:
+      - name: prometheus # Container name (like service name in Compose)
+        image: prom/prometheus:latest # Prometheus time-series database
+        ports:
+        - containerPort: 9090 # Prometheus UI and API port
+        volumeMounts:
+        - name: prometheus-config # Mount configuration
+          mountPath: /etc/prometheus # Config directory
+        - name: prometheus-storage # Mount persistent storage
+          mountPath: /prometheus # Data directory
+        command: # Override default entrypoint
+          - "/bin/prometheus" # Prometheus binary
+          - "--config.file=/etc/prometheus/prometheus.yml" # Config file path
+          - "--storage.tsdb.path=/prometheus" # Storage path
+        resources: # Define resource requests and limits for the container
+          requests: # Minimum resources guaranteed
+            memory: "256Mi" # Minimum memory allocation
+            cpu: "100m" # Minimum CPU allocation
+          limits: # Maximum resources allowed
+            memory: "512Mi" # Maximum memory limit
+            cpu: "500m" # Maximum CPU limit
+      volumes:
+      - name: prometheus-config # Reference ConfigMap
+        configMap:
+          name: prometheus-config # ConfigMap name
+      - name: prometheus-storage # Reference persistent volume
+        persistentVolumeClaim:
+          claimName: prometheus-pvc # Link to PVC
+
+########################################
+# Prometheus Service
+# Exposes Prometheus deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes Prometheus as a network service
+metadata:
+  name: prometheus # Service name for DNS resolution
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  selector:
+    app: prometheus # Route traffic to pods with this label
+  ports:
+  - port: 9090 # Service port
+    targetPort: 9090 # Pod port
+  type: ClusterIP # Internal service, not exposed outside cluster

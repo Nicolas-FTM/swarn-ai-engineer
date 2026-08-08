@@ -1,0 +1,9 @@
+########################################
+# Swarn AI Namespace
+# Logical isolation for all swarn services
+########################################
+
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Namespace # Type of Kubernetes Object. Namespace provides logical isolation and resource quotas
+metadata:
+  name: swarn-ai # Namespace name for all swarn-ai services

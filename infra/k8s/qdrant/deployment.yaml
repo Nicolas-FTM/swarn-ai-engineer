@@ -1,0 +1,59 @@
+########################################
+# Qdrant Deployment
+# This defines how the Qdrant container
+# is executed inside the Kubernetes cluster
+########################################
+
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: StatefulSet # Type of Kubernetes Object. StatefulSet is used for stateful applications that require stable network identities and persistent storage.
+metadata:
+  name: qdrant # Name of the deployment (like container_name in Compose)
+spec:
+  serviceName: qdrant-headless # Headless service that provides stable network IDs for Qdrant pods
+  replicas: 1 # Number of Qdrant instances running
+  selector:
+    matchLabels:
+      app: qdrant # Connects StatefulSet with Pods
+  template:
+    metadata:
+      labels:
+        app: qdrant # Label used by Service to find this pod
+    spec:
+      containers:
+        - name: qdrant # Container name (like service name in Compose)
+          image: qdrant/qdrant:latest # Latest version of Qdrant vector database
+          ports:
+            - containerPort: 6333 # Qdrant HTTP API port
+              name: http # Name of the port (used for Service definitions)
+            - containerPort: 6334 # Qdrant gRPC API port
+              name: grpc # Name of the port (used for Service definitions)
+          readinessProbe: # Check if Qdrant is ready to accept traffic
+            tcpSocket: # Check if the Qdrant HTTP port is open
+              port: 6333 # Port to check for readiness
+            initialDelaySeconds: 5 # Wait before starting readiness checks
+            periodSeconds: 10 # Check every 10 seconds
+          livenessProbe: # Check if Qdrant is alive and should be restarted if not
+            tcpSocket: # Check if the Qdrant HTTP port is open
+              port: 6333 # Port to check for liveness
+            initialDelaySeconds: 30 # Wait before starting liveness checks
+            periodSeconds: 20 # Check every 20 seconds
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: qdrant-storage
+              mountPath: /qdrant/storage
+  volumeClaimTemplates:
+    - metadata:
+        name: qdrant-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce # Only one node can write at a time
+        storageClassName: "local-path" # Use local storage for Qdrant data
+        resources:
+          requests:
+            storage: 1Gi # Disk size allocated for Qdrant data

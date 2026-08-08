@@ -1,0 +1,402 @@
+########################################
+# Swarn AI - Docker Compose Stack
+# Complete local development environment for multi-agent swarm system
+# Services: PostgreSQL, Qdrant, Ollama, Observability, Backend, Frontend, Nginx
+########################################
+
+services:
+  ########################################
+  # PostgreSQL Database
+  # Relational database for application data and LangFuse tracing
+  ########################################
+  postgres:
+    image: postgres:15-alpine # PostgreSQL 15 Alpine image for minimal footprint
+    container_name: swarn-postgres # Container name for easy identification
+    environment: # Environment variables for PostgreSQL configuration
+      POSTGRES_DB: swarn_db # Initial database name
+      POSTGRES_USER: postgres # Database user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password} # Database password (from .env or default)
+    ports:
+      - "5432:5432" # PostgreSQL port: host:container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persistent database storage
+      - ../scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh # SQL initialization script
+    healthcheck: # Check database availability
+      test: ["CMD-SHELL", "pg_isready -U postgres"] # Test command to verify PostgreSQL is ready
+      interval: 10s # Check every 10 seconds
+      timeout: 10s # Timeout for each check
+      retries: 5 # Retry 5 times before marking unhealthy
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # pgAdmin Web Interface
+  # Web-based administration tool for PostgreSQL
+  ########################################
+  pgadmin:
+    image: dpage/pgadmin4:latest # pgAdmin 4 image for PostgreSQL web-based administration
+    container_name: swarn-pgadmin # Container name for easy identification
+    environment: # Environment variables for pgAdmin configuration
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com} # Login email (from .env or default)
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin} # Login password (from .env or default)
+      PGADMIN_CONFIG_SERVER_MODE: "False" # Disable server mode for simpler single-user login
+    ports:
+      - "5050:80" # pgAdmin web UI port: host:container
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin # Persistent pgAdmin configuration/sessions storage
+    depends_on:
+      postgres: # Wait for postgres service
+        condition: service_healthy # Only start once postgres healthcheck passes
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Qdrant Vector Database
+  # Vector database for RAG and similarity search
+  ########################################
+  qdrant:
+    image: qdrant/qdrant:latest # Latest Qdrant vector database
+    container_name: swarn-qdrant # Container name for easy identification
+    ports:
+      - "6333:6333" # HTTP API port: host:container
+      - "6334:6334" # gRPC API port: host:container
+    volumes:
+      - qdrant_data:/qdrant/storage # Persistent vector database storage
+    environment: # Environment variables for Qdrant configuration
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-} # Optional API key for authentication
+    # Deactivated healthcheck due to curl are not working with Qdrant's health endpoint in some versions
+    # healthcheck: # Check Qdrant availability
+    #   test: ["CMD", "curl", "-f", "http://localhost:6333/health"] # Test health endpoint
+    #   interval: 10s # Check every 10 seconds
+    #   timeout: 5s # Timeout for each check
+    #   retries: 5 # Retry 5 times before marking unhealthy
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Ollama LLM Inference Engine
+  # Local LLM inference service for language models
+  ########################################
+  ollama:
+    image: ollama/ollama:latest # Ollama inference engine
+    container_name: swarn-ollama # Container name for easy identification
+    ports:
+      - "11434:11434" # Ollama API port: host:container
+    volumes:
+      - ollama_data:/root/.ollama # Persistent storage for downloaded models
+    entrypoint: sh -c "ollama serve & sleep 5 && ollama pull llama3.1 && ollama pull mxbai-embed-large && wait"
+    environment: # Environment variables for Ollama configuration
+      OLLAMA_HOST: 0.0.0.0:11434 # Bind address and port
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+
+  ########################################
+  # Loki Log Aggregator
+  # Centralized log aggregation system for all services
+  ########################################
+
+  # Fix permissions for Loki data volume (Grafana Recommendation: Loki runs as non-root
+  # user, so we need to ensure the volume has correct ownership)
+  loki-permissions-fix:
+    image: busybox # Image with basic utilities for fixing permissions
+    container_name: swarn-loki-permissions-fix # Container name for easy identification
+    user: "0:0" # User root to fix permissions on the loki-data volume
+    entrypoint: ["sh", "-c", "chown -R 10001:10001 /var/loki && echo 'Permissions fixed for Loki data volume'"] # Change ownership of the loki-data volume to the Loki user
+    volumes:
+      - loki-data:/var/loki # Persistent storage for logs data
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  loki:
+    image: grafana/loki:3.7.0 # Grafana Loki log aggregation system
+    container_name: swarn-loki # Container name for easy identification
+    depends_on:
+      loki-permissions-fix:
+        condition: service_completed_successfully
+    ports:
+      - "3100:3100" # Loki API port: host:container
+    volumes:
+      - ../loki/loki-config.yaml:/etc/loki/local-config.yaml # Loki configuration file
+      - loki-data:/var/loki # Persistent storage for logs data
+    command: -config.file=/etc/loki/local-config.yaml # Start with configuration file
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Node Exporter
+  ########################################
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: swarn-node-exporter
+    pid: host
+    ports:
+      - "9100:9100"
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Promtail Log Aggregator
+  # Log Collector Service for Loki
+  ########################################
+  promtail:
+    image: grafana/promtail:2.9.4 # Log collector for Loki
+    container_name: swarn-promtail # Container name for easy identification
+    volumes:
+      - ../promtail/promtail-config.yaml:/etc/promtail/config.yaml
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yaml # Start with configuration file
+    depends_on:
+      - loki
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Prometheus Metrics Database
+  # Time-series database for metrics collection and monitoring
+  ########################################
+  prometheus:
+    image: prom/prometheus:latest # Prometheus time-series database
+    container_name: swarn-prometheus # Container name for easy identification
+    ports:
+      - "9090:9090" # Prometheus UI and API port: host:container
+    volumes:
+      - ../prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml # Prometheus configuration
+      - prometheus_data:/prometheus # Persistent storage for metrics data
+    command: # Prometheus startup command
+      - "--config.file=/etc/prometheus/prometheus.yml" # Configuration file path
+      - "--storage.tsdb.path=/prometheus" # Time-series database storage path
+      - "--web.enable-remote-write-receiver"
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Tempo Traces Database
+  # Distributed traces (spans) TraceQL / Tempo API
+  ########################################
+
+  # Fix permissions for Tempo data volume (Grafana Recommendation: Tempo runs as non-root
+  # user, so we need to ensure the volume has correct ownership)
+  tempo-permissions-fix:
+    image: busybox # Image with basic utilities for fixing permissions
+    container_name: swarn-tempo-permissions-fix # Container name for easy identification
+    user: "0:0" # User root to fix permissions on the tempo-data volume
+    entrypoint: ["sh", "-c", "chown -R 10001:10001 /tmp/tempo && echo 'Permissions fixed for Tempo data volume'"] # Change ownership of the tempo-data volume to the Tempo user
+    volumes:
+      - tempo-data:/tmp/tempo # Persistent storage for traces data
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    container_name: swarn-tempo
+    depends_on:
+      tempo-permissions-fix:
+        condition: service_completed_successfully
+    ports:
+        - "3200:3200"   # HTTP API (for Grafana)
+        - "4317:4317"   # OTLP gRPC (for receiving spans)
+    command:
+      - "-target=all"
+      - "-config.file=/etc/tempo/local-config.yaml"
+    volumes:
+      - ../tempo/tempo-config.yaml:/etc/tempo/local-config.yaml:ro
+      - tempo-data:/tmp/tempo
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # Grafana Dashboard Platform
+  # Visualization and dashboard creation for metrics and logs
+  ########################################
+  grafana:
+    image: grafana/grafana:latest # Grafana visualization platform
+    container_name: swarn-grafana # Container name for easy identification
+    ports:
+      - "3000:3000" # Grafana web UI port: host:container
+    environment: # Environment variables for Grafana configuration
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin} # Admin password (from .env or default)
+      GF_SECURITY_ADMIN_USER: admin # Default admin username
+      GF_INSTALL_PLUGINS: grafana-piechart-panel # Install pie chart plugin
+    volumes:
+      - grafana_data:/var/lib/grafana # Persistent storage for dashboards and user data
+      - ../grafana/provisioning:/etc/grafana/provisioning # Grafana provisioning configuration
+    depends_on: # Wait for these services to start
+      - prometheus # Requires Prometheus for data source
+      - loki # Requires Loki for log visualization
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # LangFuse LLM Observability Platform
+  # Tracing and analytics for LLM applications
+  ########################################
+  langfuse-web:
+    image: ghcr.io/langfuse/langfuse:2 # LangFuse tracing platform
+    container_name: swarn-langfuse-web # Container name for easy identification
+    ports:
+      - "3001:3000" # LangFuse web UI port: host:container (internal:exposed)
+    environment: # Environment variables for LangFuse configuration
+      NODE_ENV: production # Node environment
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@postgres:5432/langfuse # PostgreSQL connection string
+      NEXTAUTH_URL: http://localhost:3001 # NextAuth authentication URL
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET:-changeme} # NextAuth secret (from .env or default)
+      SALT: ${LANGFUSE_SALT:-changeme} # Salt for password hashing (from .env or default)
+    depends_on: # Wait for these services to start
+      postgres: # Requires PostgreSQL
+        condition: service_healthy # Wait for PostgreSQL to be healthy
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+  ########################################
+  # MESSAGE BUS - Kafka (Optional, Currently Commented)
+  # Event streaming platform for agents and asynchronous messaging
+  # Uncomment to enable Kafka+Zookeeper stack
+  # TODO: massive ingestion of data, consider using a more
+  # robust Kafka cluster or managed service
+  ########################################
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.5.0
+  #   container_name: swarn-kafka
+  #   ports:
+  #     - "9092:9092"
+  #     - "29092:29092"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #   depends_on:
+  #     - zookeeper
+  #   networks:
+  #     - swarn-network
+  #
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.5.0
+  #   container_name: swarn-zookeeper
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #   networks:
+  #     - swarn-network
+
+  ########################################
+  # RAG API Service
+  # FastAPI REST API for the RAG
+  # functionality, including vector search
+  # and document retrieval
+  ########################################
+  rag_service:
+    build: # Build image from Dockerfile
+      context: ../.. # Build context (project root directory)
+      dockerfile: rag_service/Dockerfile # Dockerfile path
+    container_name: swarn-rag_service # Container name for easy identifications
+    env_file:
+      - ../../.env
+    ports:
+        - "8001:8001"     # Remove in production if you dont need quick access
+    volumes:
+      - ../../rag_service:/app/rag_service # Data directory
+      - ../../shared:/app/shared # Config source code for live reload
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: pixi run uvicorn rag_service.app.main:app --host 0.0.0.0 --port 8001 --reload # Start command with hot-reload
+
+
+  ########################################
+  # Backend API Service
+  # FastAPI REST API for the swarn application
+  ########################################
+  backend:
+    build: # Build image from Dockerfile
+      context: ../.. # Build context (project root directory)
+      dockerfile: backend/Dockerfile # Dockerfile path
+    container_name: swarn-backend # Container name for easy identification
+    env_file:
+      - ../../.env
+    ports:
+      - "8000:8000" # API port: host:container 
+    depends_on: # Wait for these services to start
+      postgres: # Requires PostgreSQL
+        condition: service_healthy # Wait for PostgreSQL to be healthy
+      # qdrant: # Requires Qdrant
+      #   condition: service_healthy # Wait for Qdrant to be healthy
+      # ollama: # Requires Ollama
+      #   condition: service_healthy # Wait for Ollama to be healthy
+    volumes: # Mount directories for development
+      # - ../../backend/data:/app/data # Data directory
+      - ../../backend:/app/backend # Data directory
+      # - ../../backend/app:/app/app # Backend source code for live reload
+      - ../../config:/app/config # Config source code for live reload
+      - ../../shared:/app/shared # Shared Data Directory
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+    command: pixi run uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload # Start command with hot-reload
+
+  ########################################
+  # Frontend Web Application
+  # React + Vite web UI for the swarn application
+  ########################################
+  frontend:
+    build: # Build image from Dockerfile
+      context: ../.. # Build context (frontend directory)
+      dockerfile: frontend/Dockerfile # Dockerfile path
+    container_name: swarn-frontend # Container name for easy identification
+    ports:
+      - "5173:5173" # Dev server port: host:container (mapped to nginx port) 
+    env_file:
+      - ../../.env
+    volumes: # Mount directories for development
+      - ../../frontend:/app/frontend # Frontend source code for hot-reload
+      - /app/frontend/node_modules # Avoid that the volume overlap node_modules
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+    command: npm run dev -- --host 0.0.0.0 # Start development server with hot-reload
+
+  ########################################
+  # Nginx Reverse Proxy
+  # Load balancer and reverse proxy for backend and frontend
+  ########################################
+  nginx:
+    image: nginx:alpine # Nginx Alpine image for minimal footprint
+    container_name: swarn-nginx # Container name for easy identification
+    ports:
+      - "80:80" # HTTP port: host:container
+      - "443:443" # HTTPS port: host:container
+    volumes: # Mount configuration and certificates
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro # Nginx configuration (read-only)
+      - ../nginx/certs:/etc/nginx/certs:ro # SSL/TLS certificates (read-only)
+    depends_on: # Wait for these services to start
+      - backend # Requires backend to be running
+      - frontend # Requires frontend to be running
+    networks:
+      - swarn-network # Connect to swarn-network for service-to-service communication
+
+########################################
+# Docker Networks
+# Define custom networks for service communication
+########################################
+networks:
+  swarn-network: # Network name for all swarn services
+    driver: bridge # Bridge driver for container-to-container communication
+
+########################################
+# Docker Volumes
+# Define persistent storage for stateful services
+########################################
+volumes:
+  postgres_data: # PostgreSQL database storage
+  pgadmin_data: # pgAdmin configuration and session storage
+  qdrant_data: # Qdrant vector database storage
+  ollama_data: # Ollama models and cache storage
+  loki-data: # Loki logs storage
+  prometheus_data: # Prometheus metrics storage
+  grafana_data: # Grafana dashboards and configuration storage
+  tempo-data: # Tempo Data

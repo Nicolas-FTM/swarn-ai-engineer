@@ -1,0 +1,63 @@
+########################################
+# Kafka Deployment
+# Event streaming system for agents
+########################################
+
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: StatefulSet # Type of Kubernetes Object. StatefulSet is used for stateful applications that require stable network identities and persistent storage.
+metadata:
+  name: kafka # Name of the deployment (like container_name in Compose)
+spec:
+  serviceName: kafka-headless # Headless service that provides stable network IDs for Kafka pods
+  replicas: 1 # Number of Kafka instances running
+  selector:
+    matchLabels:
+      app: kafka # Connects StatefulSet with Pods
+  template:
+    metadata:
+      labels:
+        app: kafka # Label used by Service to find this pod
+    spec:
+      containers:
+        - name: kafka # Container name (like service name in Compose)
+          image: apache/kafka:latest # Official Apache Kafka image; bitnami tag was unavailable
+          ports:
+            - containerPort: 9092 # Kafka broker port
+              name: kafka # Name of the port (used for Service definitions)
+          env:
+            - name: KAFKA_BROKER_ID # Unique ID for each Kafka broker
+              value: "1"
+            - name: KAFKA_CFG_LISTENERS # Define how Kafka listens for connections
+              value: PLAINTEXT://0.0.0.0:9092 # Listeners for the Kafka broker
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS # Define how Kafka advertises itself to clients
+              value: PLAINTEXT://kafka-service.default.svc.cluster.local:9092 # Advertised listeners for the Kafka broker
+          readinessProbe: # Check if Kafka is ready to accept traffic
+            tcpSocket: # Check if the Kafka port is open
+              port: 9092 # Port to check for readiness
+            initialDelaySeconds: 20 # Wait before starting readiness checks
+            periodSeconds: 10 # Check every 10 seconds
+          livenessProbe: # Check if Kafka is alive and should be restarted if not
+            tcpSocket: # Check if the Kafka port is open
+              port: 9092 # Port to check for liveness
+            initialDelaySeconds: 60 # Wait before starting liveness checks
+            periodSeconds: 20 # Check every 20 seconds
+          resources: # Define resource requests and limits for the container
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: kafka-storage
+              mountPath: /var/lib/kafka # Where Kafka stores logs/data in the Apache Kafka image
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce # Only one node can write at a time
+        storageClassName: "local-path" # Use local storage for Kafka logs and data
+        resources:
+          requests:
+            storage: 2Gi # Disk size allocated for Kafka logs and data

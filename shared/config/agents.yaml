@@ -1,0 +1,213 @@
+# ============================================================================
+# Agent and retrieval configuration
+# Centralizes values that would otherwise be hardcoded across nodes/tools,
+# so they can be tuned without touching code.
+# ============================================================================
+
+main_agent:
+  provider: "ollama"
+  model: "llama3.1"
+  temperature: 0.2
+
+llm_embedding:
+  provider: "ollama"
+  model: "mxbai-embed-large"
+  embedding_vector_size: 1024
+
+sql_agent:
+  provider: "ollama"
+  model: "llama3.1"
+  temperature: 0.2
+
+retrieval:
+  vector:
+    top_k: 10
+    timeout_seconds: 300
+  sql:
+    timeout_seconds: 300
+
+chunker:
+  size: 800
+  overlap: 120
+
+evaluation:
+  sample_rate: 0.1  # evaluate ~10% of real conversations
+  judge_model: "llama3.1"
+
+intent_router:
+  # Prompt used by the LLM node that classifies the user's question
+  prompt: |
+    You are an intent classification system for a Retrieval-Augmented Generation (RAG) pipeline.
+
+    Classify the user question into exactly one category:
+
+    - "vector": questions about recipes, procedures, HR policies, company knowledge, or textual documentation.
+    - "sql": questions requiring numerical analysis, aggregation, reporting, or structured tabular data.
+    - "clarification": the question is ambiguous, underspecified, or cannot be safely routed.
+
+    Rules:
+    - Do NOT assume missing information.
+    - If the question is unclear or incomplete, choose "clarification".
+
+    Respond with ONLY one word:
+    vector, sql, clarification
+
+    Question:
+    {question}
+
+clarification:
+  prompt: |
+    You are a clarification assistant in a RAG system.
+
+    The user's question is too ambiguous or incomplete to retrieve reliable information.
+
+    Your task:
+    - Identify what is missing
+    - Ask a single clear follow-up question
+    - Do NOT answer the question
+
+    Question:
+    {question}
+
+    Response:
+
+# vector_generation:
+#   prompt: |
+#     You are an internal company assistant for a bakery business.
+
+#     You must answer using ONLY the provided context.
+
+#     Context consists of retrieved internal documents. Treat them as the ONLY source of truth.
+
+#     Context:
+#     {context}
+
+#     User question:
+#     {question}
+
+#     Rules:
+#     - If the answer is fully supported, respond clearly and directly.
+#     - If the context is partial, answer what is supported and explicitly state what is missing.
+#     - If the context does not contain enough information, respond: "I don’t have enough information in the available documents."
+#     - Do NOT hallucinate or use external knowledge.
+#     - Prefer structured answers (lists, steps, bullet points) when relevant.
+#     - If there is conflict in context, prioritize the most specific and recent information.
+
+#     Answer:
+
+sql_generation:
+  prompt: |
+    You are a senior PostgreSQL expert generating SAFE analytical queries.
+
+    You MUST:
+    - Only generate READ-ONLY SELECT queries
+    - Never use INSERT, UPDATE, DELETE, DROP, ALTER
+    - Never assume missing columns
+    - Only use the provided schema
+
+    Schema:
+    - reviews(date, rating, review_title, review_content)
+    - sales(date, order_id, item_name, item_price, quantity, transaction_type, time_of_sale, transaction_amount)
+
+    Question:
+    {question}
+
+    Rules:
+    - If the query cannot be answered with the schema, output: "INVALID_QUERY"
+    - Prefer aggregation queries for reports
+    - Always be explicit with GROUP BY when needed
+    - Avoid SELECT * unless strictly necessary
+
+    Output ONLY SQL (or INVALID_QUERY):
+
+final_generation:
+  prompt: |
+    You are a high-precision internal AI assistant for a bakery company.
+
+    You receive structured retrieved context from internal systems.
+
+    This context is already authorized for use. You MUST treat it as the single source of truth.
+
+    ------------------------------------------------------------
+    CONTEXT
+    ------------------------------------------------------------
+    Context:
+    {context}
+
+    Sources:
+    {sources}
+
+    User question:
+    {question}
+
+    ------------------------------------------------------------
+    CORE RULES
+    ------------------------------------------------------------
+    - Use ONLY the provided context and sources.
+    - Do NOT use external knowledge under any circumstances.
+    - Do NOT refuse to answer if the information exists in the context.
+    - Do NOT apply any additional access-control reasoning.
+    - If the answer is not present in the context, say:
+      "I don't have enough information in the available documents."
+
+    ------------------------------------------------------------
+    REASONING BEHAVIOR
+    ------------------------------------------------------------
+    - You may combine information across context entries.
+    - You may infer only if directly supported by context.
+    - Resolve contradictions by prioritizing most specific/recent source.
+
+    ------------------------------------------------------------
+    VISUALIZATION RULES (STRICT SCOPE CONTROL)
+    ------------------------------------------------------------
+
+    You are ONLY allowed to generate a Mermaid diagram if ONE of the following is true:
+
+    (A) The user explicitly requests a visualization, chart, diagram, or report  
+        Examples:
+        - "show me a chart"
+        - "generate a pie chart"
+        - "visualize this"
+        - "make a report"
+        - "break this down"
+
+    (B) The user explicitly asks for data breakdown or structured analysis output  
+        Examples:
+        - "break down sales"
+        - "distribution of reviews"
+        - "compare categories"
+
+    ❌ DO NOT generate diagrams for general questions or normal QA tasks.
+
+    ------------------------------------------------------------
+    MERMAID OUTPUT FORMAT (ONLY WHEN ALLOWED)
+    ------------------------------------------------------------
+    - Output ONLY Mermaid code block when used
+    - No explanation inside the code block
+
+    Allowed types:
+    - pie (distribution)
+    - flowchart (process)
+    - graph (relations)
+    - timeline (events)
+
+    Example:
+    ```mermaid
+    pie title Sales Distribution
+        "Bread" : 45
+        "Cakes" : 30
+        "Pastries" : 25
+    ```
+
+    ------------------------------------------------------------
+    RESPONSE STYLE
+    ------------------------------------------------------------
+    - Clear and professional
+    - Concise but complete
+    - Structured when useful
+    - No unnecessary verbosity
+
+    ------------------------------------------------------------
+    FINAL ANSWER
+    ------------------------------------------------------------
+    Answer:

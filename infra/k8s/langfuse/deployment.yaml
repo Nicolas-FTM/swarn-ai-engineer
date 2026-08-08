@@ -1,0 +1,94 @@
+########################################
+# LangFuse PersistentVolumeClaim
+# Storage for LangFuse application data
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: PersistentVolumeClaim # Type of Kubernetes Object. PVC requests storage resources
+metadata:
+  name: langfuse-pvc # PVC name
+  namespace: swarn-ai # Namespace where PVC runs
+spec:
+  accessModes:
+    - ReadWriteOnce # Only one pod can write at a time
+  resources:
+    requests:
+      storage: 10Gi # Disk size for LangFuse data
+
+########################################
+# LangFuse Deployment
+# LLM application tracing and monitoring platform
+########################################
+
+---
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Deployment # Type of Kubernetes Object. Deployment manages LangFuse instance
+metadata:
+  name: langfuse # Name of the deployment (like container_name in Compose)
+  namespace: swarn-ai # Namespace where deployment runs
+spec:
+  replicas: 1 # Single LangFuse instance
+  selector:
+    matchLabels:
+      app: langfuse # Connects Deployment with Pods
+  template:
+    metadata:
+      labels:
+        app: langfuse # Label used by Service to find this pod
+    spec:
+      containers:
+      - name: langfuse # Container name (like service name in Compose)
+        image: ghcr.io/langfuse/langfuse:latest # LangFuse tracing and analytics platform
+        ports:
+        - containerPort: 3000 # LangFuse web UI port
+        env:
+        - name: NODE_ENV # Node environment
+          value: "production"
+        - name: DATABASE_URL # PostgreSQL connection string
+          valueFrom:
+            secretKeyRef:
+              name: langfuse-secrets # Secret containing database URL
+              key: database-url
+        - name: NEXTAUTH_URL # NextAuth authentication URL
+          value: "http://langfuse:3000"
+        - name: NEXTAUTH_SECRET # NextAuth secret from secret
+          valueFrom:
+            secretKeyRef:
+              name: langfuse-secrets # Secret containing NextAuth secret
+              key: nextauth-secret
+        - name: SALT # Salt for password hashing
+          valueFrom:
+            secretKeyRef:
+              name: langfuse-secrets # Secret containing salt value
+              key: salt
+        resources: # Define resource requests and limits for the container
+          requests: # Minimum resources guaranteed
+            memory: "512Mi" # Minimum memory allocation
+            cpu: "250m" # Minimum CPU allocation
+          limits: # Maximum resources allowed
+            memory: "1Gi" # Maximum memory limit
+            cpu: "1" # Maximum CPU limit
+      initContainers:
+      - name: wait-for-postgres # Init container to wait for database availability
+        image: busybox:1.28 # Lightweight image for utilities
+        command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done'] # Wait for postgres port to be open
+
+########################################
+# LangFuse Service
+# Exposes LangFuse deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes LangFuse as a network service
+metadata:
+  name: langfuse # Service name for DNS resolution
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  selector:
+    app: langfuse # Route traffic to pods with this label
+  ports:
+  - port: 3000 # Service port
+    targetPort: 3000 # Pod port
+  type: ClusterIP # Internal service, not exposed outside cluster

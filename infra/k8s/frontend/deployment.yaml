@@ -1,0 +1,98 @@
+########################################
+# Frontend Deployment
+# Web UI for the swarn application
+########################################
+
+---
+apiVersion: apps/v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Deployment # Type of Kubernetes Object. Deployment ensures specified number of frontend pod replicas
+metadata:
+  name: frontend # Name of the deployment
+  namespace: swarn-ai # Namespace where deployment runs
+  labels:
+    app: frontend # Label for organizing and querying resources
+spec:
+  replicas: 2 # Number of frontend instances for high availability
+  selector:
+    matchLabels:
+      app: frontend # Connects Deployment with Pods
+  template:
+    metadata:
+      labels:
+        app: frontend # Label used by Service to find this pod
+    spec:
+      containers:
+      - name: frontend # Container name (like service name in Compose)
+        image: swarn/frontend:latest # Frontend application image (Vite + React)
+        imagePullPolicy: IfNotPresent # Use local image if available, otherwise pull
+        ports:
+        - containerPort: 80 # Frontend HTTP port
+          name: http # Name of the port (used for Service definitions)
+        env:
+        - name: VITE_API_BASE_URL # Backend API endpoint
+          value: "/api" # Relative path for API calls
+        livenessProbe: # Check if frontend is alive and should be restarted if not
+          httpGet: # Make HTTP request to check health
+            path: / # Root path for health check
+            port: 80 # Port to check
+          initialDelaySeconds: 30 # Wait before starting liveness checks
+          periodSeconds: 10 # Check every 10 seconds
+        readinessProbe: # Check if frontend is ready to accept traffic
+          httpGet: # Make HTTP request to check readiness
+            path: / # Root path for readiness check
+            port: 80 # Port to check
+          initialDelaySeconds: 10 # Wait before starting readiness checks
+          periodSeconds: 5 # Check every 5 seconds
+        resources: # Define resource requests and limits for the container
+          requests: # Minimum resources guaranteed
+            memory: "256Mi" # Minimum memory allocation
+            cpu: "100m" # Minimum CPU allocation
+          limits: # Maximum resources allowed
+            memory: "512Mi" # Maximum memory limit
+            cpu: "500m" # Maximum CPU limit
+
+########################################
+# Frontend Service
+# Exposes frontend deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes an application as a network service
+metadata:
+  name: frontend # Service name for DNS resolution
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  selector:
+    app: frontend # Route traffic to pods with this label
+  ports:
+  - port: 80 # Service port
+    targetPort: 80 # Pod port
+    name: http # Port name for reference
+  type: ClusterIP # Internal service, not exposed outside cluster
+
+########################################
+# Frontend HorizontalPodAutoscaler
+# Automatically scales frontend replicas based on CPU usage
+########################################
+
+---
+apiVersion: autoscaling/v2 # Define which Kubernetes API ruleset is used for this resource
+kind: HorizontalPodAutoscaler # Type of Kubernetes Object. HPA automatically scales replicas
+metadata:
+  name: frontend-hpa # HPA name
+  namespace: swarn-ai # Namespace where HPA runs
+spec:
+  scaleTargetRef: # Target resource to scale
+    apiVersion: apps/v1 # API version
+    kind: Deployment # Target kind
+    name: frontend # Target deployment name
+  minReplicas: 2 # Minimum number of replicas
+  maxReplicas: 5 # Maximum number of replicas
+  metrics:
+  - type: Resource # Scale based on resource metrics
+    resource:
+      name: cpu # Scale based on CPU usage
+      target:
+        type: Utilization # Scale when CPU utilization exceeds threshold
+        averageUtilization: 70 # Target 70% CPU utilization

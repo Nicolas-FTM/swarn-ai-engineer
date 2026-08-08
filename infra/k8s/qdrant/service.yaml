@@ -1,0 +1,47 @@
+########################################
+# Qdrant Headless Service
+# Provides stable network identity for Qdrant pods managed by StatefulSet
+########################################
+
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes an application as a network service
+metadata:
+  name: qdrant-headless # Headless service name for StatefulSet stable DNS
+  namespace: swarn-ai # Namespace where service runs
+spec:
+  clusterIP: None # Headless service for stable pod hostnames
+  selector:
+    app: qdrant # Route traffic to pods with this label
+  ports:
+    - name: http # HTTP API port name
+      port: 6333 # Service port
+      targetPort: 6333 # Pod port
+    - name: grpc # gRPC API port name
+      port: 6334 # Service port
+      targetPort: 6334 # Pod port
+
+########################################
+# Qdrant Service
+# Exposes Qdrant deployment internally
+########################################
+
+---
+apiVersion: v1 # Define which Kubernetes API ruleset is used for this resource
+kind: Service # Type of Kubernetes Object. Service exposes Qdrant as a network service
+metadata:
+  name: qdrant-service # Name of the deployment (like container_name in Compose)
+
+spec:
+  selector:
+    app: qdrant # Connects service to deployment pods
+
+  ports:
+    - name: http
+      port: 6333
+      targetPort: 6333  # Maps external port to container HTTP API
+
+    - name: grpc
+      port: 6334
+      targetPort: 6334  # Maps external port to container gRPC API
+
+  type: NodePort # Exposes service outside cluster (dev mode)
